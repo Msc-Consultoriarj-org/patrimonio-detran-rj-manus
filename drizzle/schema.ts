@@ -1,28 +1,42 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
 
 /**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
+ * Tabela de usuários com autenticação local e controle de acesso
  */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  openId: varchar("openId", { length: 64 }).unique(),
+  username: varchar("username", { length: 64 }).unique(),
+  passwordHash: text("passwordHash"),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  mustChangePassword: int("mustChangePassword").default(1).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+/**
+ * Tabela de patrimônios de informática do Detran-RJ
+ */
+export const patrimonios = mysqlTable("patrimonios", {
+  id: int("id").autoincrement().primaryKey(),
+  descricao: text("descricao").notNull(),
+  categoria: varchar("categoria", { length: 100 }).notNull(),
+  valor: decimal("valor", { precision: 10, scale: 2 }).notNull(),
+  localizacao: varchar("localizacao", { length: 200 }).notNull(),
+  numeroSerie: varchar("numeroSerie", { length: 100 }),
+  dataAquisicao: timestamp("dataAquisicao").notNull(),
+  responsavel: varchar("responsavel", { length: 200 }).notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+export type Patrimonio = typeof patrimonios.$inferSelect;
+export type InsertPatrimonio = typeof patrimonios.$inferInsert;

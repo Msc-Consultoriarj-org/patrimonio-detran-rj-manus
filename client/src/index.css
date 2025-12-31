@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -43,10 +44,18 @@
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
+  /* Cores do Detran-RJ */
+  --detran-blue: oklch(0.55 0.18 240);
+  --detran-green: oklch(0.65 0.20 145);
+  --detran-blue-dark: oklch(0.45 0.18 240);
+  --detran-green-dark: oklch(0.55 0.20 145);
+
+  --primary: var(--detran-blue);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: var(--detran-green);
+  --secondary-foreground: oklch(1 0 0);
+  --sidebar-primary: var(--detran-blue);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
@@ -119,6 +128,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
