@@ -15,6 +15,13 @@
       "when": 1767156612645,
       "tag": "0001_boring_lila_cheney",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1767372434919,
+      "tag": "0002_broad_crystal",
+      "breakpoints": true
     }
   ]
 }

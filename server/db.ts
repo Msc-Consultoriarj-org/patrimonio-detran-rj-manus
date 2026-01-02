@@ -1,6 +1,6 @@
 import { eq, like, or, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, patrimonios, InsertPatrimonio } from "../drizzle/schema";
+import { InsertUser, users, patrimonios, InsertPatrimonio, sugestoes, InsertSugestao } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -221,4 +221,47 @@ export async function searchPatrimonios(searchTerm: string, categoria?: string, 
     .orderBy(desc(patrimonios.createdAt));
 
   return result;
+}
+
+// ============================================
+// Sugestoes Helpers
+// ============================================
+
+export async function createSugestao(sugestao: InsertSugestao) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(sugestoes).values(sugestao);
+}
+
+export async function getAllSugestoes() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(sugestoes)
+    .orderBy(desc(sugestoes.createdAt));
+
+  return result;
+}
+
+export async function getSugestoesByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(sugestoes)
+    .where(eq(sugestoes.userId, userId))
+    .orderBy(desc(sugestoes.createdAt));
+
+  return result;
+}
+
+export async function updateSugestaoStatus(id: number, status: "pendente" | "em_analise" | "aprovada" | "rejeitada") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(sugestoes)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(sugestoes.id, id));
 }

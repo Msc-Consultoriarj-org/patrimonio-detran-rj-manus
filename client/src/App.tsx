@@ -11,6 +11,10 @@ import Login from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
 import Profile from "./pages/Profile";
 import Patrimonios from "./pages/Patrimonios";
+import Sugestoes from "./pages/Sugestoes";
+import UploadImagem from "./pages/UploadImagem";
+import Relatorios from "./pages/Relatorios";
+import UploadCSV from "./pages/UploadCSV";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
@@ -47,6 +51,18 @@ function Router() {
       </Route>
       <Route path="/patrimonios">
         <ProtectedRoute component={Patrimonios} />
+      </Route>
+      <Route path="/sugestoes">
+        <ProtectedRoute component={Sugestoes} />
+      </Route>
+      <Route path="/upload-imagem">
+        <ProtectedRoute component={UploadImagem} />
+      </Route>
+      <Route path="/relatorios">
+        <ProtectedRoute component={Relatorios} />
+      </Route>
+      <Route path="/upload-csv">
+        <ProtectedRoute component={UploadCSV} />
       </Route>
       <Route path="/">
         <ProtectedRoute component={Home} />

@@ -136,3 +136,43 @@
 - [x] Adicionar usuário Phelipe ao sistema
 - [x] Remover obrigatoriedade de troca de senha
 - [x] Testar fluxo completo de login simplificado
+
+
+## Novas Funcionalidades Solicitadas
+
+### Aba de Sugestões
+- [x] Criar tabela de sugestões no banco de dados
+- [x] Implementar backend para criar e listar sugestões
+- [x] Criar página de sugestões com formulário
+- [x] Adicionar validações de campos
+- [x] Implementar feedback visual de envio
+
+### Aba de Upload de Imagem
+- [x] Adicionar campo imageUrl na tabela patrimonios
+- [x] Implementar upload de imagem para S3
+- [x] Criar formulário de upload com campos obrigatórios (imagem, nº patrimônio, localização)
+- [x] Campos opcionais (descrição, número de série)
+- [x] Implementar tela de confirmação antes de salvar
+- [x] Feedback visual e textual do progresso de upload
+- [x] Validação de formato de imagem
+
+### Aba de Relatórios
+- [x] Implementar exportação em CSV
+- [x] Implementar exportação em PDF
+- [x] Implementar exportação em Markdown
+- [x] Criar visualização de relatórios no sistema
+- [x] Adicionar filtros para geração de relatórios
+- [x] Interface visual para seleção de formato
+
+### Aba de Upload CSV
+- [x] Implementar parser de CSV
+- [x] Criar interface visual de validação de dados
+- [x] Permitir edição de dados antes de salvar
+- [x] Validação rigorosa de conteúdo do CSV
+- [x] Feedback de erros e avisos
+- [x] Salvar dados validados no banco
+
+### Navegação
+- [x] Adicionar novas abas ao menu do dashboard
+- [x] Atualizar rotas no App.tsx
+- [x] Garantir proteção de rotas autenticadas

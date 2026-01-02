@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Home, LogOut, PanelLeft, Package } from "lucide-react";
+import { Home, LogOut, PanelLeft, Package, Lightbulb, Image, FileText, Upload } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -31,6 +31,10 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: Home, label: "Início", path: "/" },
   { icon: Package, label: "Patrimônios", path: "/patrimonios" },
+  { icon: Lightbulb, label: "Sugestões", path: "/sugestoes" },
+  { icon: Image, label: "Upload Imagem", path: "/upload-imagem" },
+  { icon: FileText, label: "Relatórios", path: "/relatorios" },
+  { icon: Upload, label: "Upload CSV", path: "/upload-csv" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

@@ -16,6 +16,10 @@ import {
   updatePatrimonio,
   deletePatrimonio,
   searchPatrimonios,
+  createSugestao,
+  getAllSugestoes,
+  getSugestoesByUserId,
+  updateSugestaoStatus,
 } from "./db";
 
 // ============================================
@@ -217,6 +221,55 @@ export const appRouter = router({
         }
 
         await deletePatrimonio(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ============================================
+  // Sugestoes Router
+  // ============================================
+  sugestoes: router({
+    list: protectedProcedure.query(async () => {
+      return await getAllSugestoes();
+    }),
+
+    myList: protectedProcedure.query(async ({ ctx }) => {
+      return await getSugestoesByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(
+        z.object({
+          titulo: z.string().min(1, "Título é obrigatório"),
+          descricao: z.string().min(1, "Descrição é obrigatória"),
+          categoria: z.string().min(1, "Categoria é obrigatória"),
+          prioridade: z.enum(["baixa", "media", "alta"]).default("media"),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        await createSugestao({
+          ...input,
+          userId: ctx.user.id,
+        });
+        return { success: true };
+      }),
+
+    updateStatus: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          status: z.enum(["pendente", "em_analise", "aprovada", "rejeitada"]),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        // Apenas admins podem atualizar status
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Apenas administradores podem atualizar o status",
+          });
+        }
+        await updateSugestaoStatus(input.id, input.status);
         return { success: true };
       }),
   }),
