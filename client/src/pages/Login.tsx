@@ -11,6 +11,13 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const meQuery = trpc.auth.me.useQuery();
+
+  // Se já está autenticado, redireciona para home
+  if (!meQuery.isLoading && meQuery.data) {
+    setLocation("/");
+    return null;
+  }
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async () => {
@@ -19,8 +26,8 @@ export default function Login() {
       await utils.auth.me.invalidate();
       // Refetch para garantir que o usuário seja carregado antes de redirecionar
       await utils.auth.me.refetch();
-      // Aguarda um pouco para garantir que o estado foi atualizado
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Aguarda 500ms para garantir que o estado foi completamente atualizado
+      await new Promise(resolve => setTimeout(resolve, 500));
       // Redireciona para a home após login bem-sucedido
       setLocation("/");
     },

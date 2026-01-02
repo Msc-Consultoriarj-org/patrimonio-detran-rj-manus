@@ -345,3 +345,29 @@
 - [x] Testar filtros por categoria e localização
 - [x] Testar busca por descrição e número de série
 - [x] Validar gráficos com dados reais
+
+
+## PROBLEMA CRÍTICO - Login Persistente Não Funciona
+
+### Sintomas
+- [x] Login sempre redireciona de volta para tela de login
+- [x] Problema ocorre com TODOS os usuários (moises, pedro, phelipe)
+- [x] Mensagem "Login realizado com sucesso" aparece mas não mantém sessão
+- [x] Problema persiste mesmo após múltiplas correções anteriores
+
+### Solução - Redesenhar Sistema de Autenticação do Zero
+- [x] Limpar todos os cookies e sessões antigas
+- [x] Resetar lógica de context.ts
+- [x] Redesenhar router de login no backend
+- [x] Redesenhar página de Login no frontend
+- [x] Simplificar ao máximo a lógica de autenticação
+- [x] Testar com navegador limpo (sem cache)
+- [x] Validar que cookie está sendo setado corretamente
+- [x] Validar que cookie está sendo lido corretamente
+- [x] Testar redirecionamento após login
+- [x] Testar com todos os 3 usuários
+
+### Causa Raiz Identificada
+- sameSite: "none" exigia secure: true mas não funcionava corretamente
+- useEffect no ProtectedRoute criava race condition
+- Solução: sameSite: "lax" + remoção de useEffect

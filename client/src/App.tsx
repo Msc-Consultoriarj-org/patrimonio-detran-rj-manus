@@ -21,24 +21,22 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      setLocation("/login");
-    }
-  }, [user, loading, setLocation]);
-
+  // Mostrar loading enquanto verifica autenticação
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066CC] to-[#00AA44]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     );
   }
 
+  // Se não está autenticado, redireciona para login
   if (!user) {
+    setLocation("/login");
     return null;
   }
 
+  // Usuário autenticado, renderiza componente
   return <Component />;
 }
 
