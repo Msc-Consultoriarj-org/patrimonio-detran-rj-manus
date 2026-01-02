@@ -242,3 +242,72 @@
 - [x] Manter cards de estatísticas gerais
 - [x] Adicionar tooltips informativos nos gráficos
 - [x] Garantir responsividade em mobile
+
+
+## Sistema Completo de Upload CSV
+
+### Backend - Parsing e Validação
+- [x] Instalar biblioteca xlsx para suporte a Excel (XLSX, XLS)
+- [x] Implementar parser de CSV com detecção automática de delimitador
+- [x] Implementar parser de Excel (XLSX/XLS)
+- [x] Criar sistema de validação de campos obrigatórios
+- [x] Validar formatos de dados (números, datas, texto)
+- [x] Detectar e alertar sobre duplicatas (número de série)
+- [x] Criar endpoint tRPC para processar arquivo
+- [x] Implementar importação em lote no banco de dados
+
+### Frontend - Interface de Upload
+- [x] Criar área de drag-and-drop para upload de arquivo
+- [x] Suportar formatos: CSV, XLSX, XLS
+- [x] Mostrar preview do arquivo após upload
+- [x] Exibir nome, tamanho e tipo do arquivo
+- [x] Botão para remover arquivo e fazer novo upload
+
+### Mapeamento de Colunas
+- [x] Detectar automaticamente colunas da planilha
+- [x] Interface para mapear colunas da planilha para campos do sistema
+- [x] Sugestões inteligentes de mapeamento baseado em nomes
+- [x] Validar se todos os campos obrigatórios foram mapeados
+- [x] Permitir pular colunas não utilizadas
+
+### Preview e Validação Visual
+- [x] Tabela interativa mostrando dados importados
+- [x] Destacar linhas com erros em vermelho
+- [x] Destacar linhas com avisos em amarelo
+- [x] Mostrar ícones de erro/aviso em cada linha problemática
+- [x] Tooltip explicando cada erro/aviso
+- [x] Contador de registros válidos/inválidos
+- [x] Filtros para mostrar apenas linhas com problemas
+
+### Edição Inline
+- [x] Permitir editar células diretamente na tabela
+- [x] Validação em tempo real ao editar
+- [x] Destacar células editadas
+- [x] Botão para desfazer edições
+- [x] Salvar estado de edições
+
+### Tela de Confirmação
+- [x] Resumo estatístico (total de registros, válidos, inválidos)
+- [x] Listagem de erros encontrados com contagem
+- [x] Opção de importar apenas registros válidos
+- [x] Opção de cancelar e corrigir planilha
+- [x] Barra de progresso durante importação
+- [x] Log detalhado de importação
+- [x] Mensagem de sucesso com quantidade importada
+
+### Tratamento de Erros
+- [x] Validação de campos obrigatórios (descrição, categoria, valor, localização)
+- [x] Validação de formato de número para valor
+- [x] Validação de formato de data para dataAquisicao
+- [x] Detecção de números de série duplicados
+- [x] Validação de categorias permitidas
+- [x] Mensagens de erro claras e acionáveis
+- [x] Sugestões de correção para erros comuns
+
+### UX e Feedback
+- [x] Instruções claras sobre formato esperado
+- [x] Template CSV de exemplo para download
+- [x] Feedback visual durante upload (loading)
+- [x] Animações de transição entre etapas
+- [x] Mensagens de sucesso/erro com toast
+- [x] Opção de fazer novo upload após importação

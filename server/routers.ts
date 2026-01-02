@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import * as XLSX from "xlsx";
 import { storagePut } from "./storage";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -291,6 +292,183 @@ export const appRouter = router({
       const data = await getPatrimoniosByLocalizacao();
       return data;
     }),
+  }),
+
+  // ============================================
+  // CSV Import Router
+  // ============================================
+  csv: router({
+    parse: protectedProcedure
+      .input(
+        z.object({
+          base64: z.string(),
+          fileName: z.string(),
+          mimeType: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          // Converter base64 para Buffer
+          const base64Data = input.base64.split(",")[1] || input.base64;
+          const buffer = Buffer.from(base64Data, "base64");
+
+          let data: any[][] = [];
+
+          // Processar baseado no tipo de arquivo
+          if (input.mimeType.includes("spreadsheet") || input.fileName.endsWith(".xlsx") || input.fileName.endsWith(".xls")) {
+            // Processar Excel
+            const workbook = XLSX.read(buffer, { type: "buffer" });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          } else {
+            // Processar CSV
+            const text = buffer.toString("utf-8");
+            const lines = text.split("\n").filter(line => line.trim());
+            data = lines.map(line => {
+              // Tentar detectar delimitador
+              const delimiters = [",", ";", "\t", "|"];
+              let bestDelimiter = ",";
+              let maxColumns = 0;
+
+              for (const delimiter of delimiters) {
+                const columns = line.split(delimiter).length;
+                if (columns > maxColumns) {
+                  maxColumns = columns;
+                  bestDelimiter = delimiter;
+                }
+              }
+
+              return line.split(bestDelimiter).map(cell => cell.trim().replace(/^"|"$/g, ""));
+            });
+          }
+
+          // Extrair cabeçalhos e linhas
+          const headers = data[0] || [];
+          const rows = data.slice(1).filter(row => row.some(cell => cell));
+
+          // Validar e processar dados
+          const processedRows = rows.map((row, index) => {
+            const rowData: any = {};
+            headers.forEach((header, i) => {
+              rowData[header] = row[i] || "";
+            });
+
+            // Validações
+            const errors: string[] = [];
+            const warnings: string[] = [];
+
+            // Campos obrigatórios
+            const requiredFields = ["descricao", "categoria", "valor", "localizacao"];
+            requiredFields.forEach(field => {
+              const value = rowData[field] || rowData[field.charAt(0).toUpperCase() + field.slice(1)];
+              if (!value || String(value).trim() === "") {
+                errors.push(`Campo obrigatório "${field}" está vazio`);
+              }
+            });
+
+            // Validar valor numérico
+            const valorField = rowData.valor || rowData.Valor || rowData.VALOR;
+            if (valorField) {
+              const valorNum = Number(String(valorField).replace(/[^0-9.,]/g, "").replace(",", "."));
+              if (isNaN(valorNum) || valorNum <= 0) {
+                errors.push("Valor deve ser um número positivo");
+              }
+            }
+
+            // Validar data de aquisição
+            const dataField = rowData.dataAquisicao || rowData.DataAquisicao || rowData.data_aquisicao;
+            if (dataField && String(dataField).trim()) {
+              const dateTest = new Date(dataField);
+              if (isNaN(dateTest.getTime())) {
+                warnings.push("Data de aquisição em formato inválido");
+              }
+            }
+
+            return {
+              index: index + 2, // +2 porque linha 1 é header e index começa em 0
+              data: rowData,
+              errors,
+              warnings,
+              isValid: errors.length === 0,
+            };
+          });
+
+          const validCount = processedRows.filter(r => r.isValid).length;
+          const invalidCount = processedRows.filter(r => !r.isValid).length;
+
+          return {
+            success: true,
+            headers,
+            rows: processedRows,
+            stats: {
+              total: processedRows.length,
+              valid: validCount,
+              invalid: invalidCount,
+            },
+          };
+        } catch (error) {
+          console.error("Erro ao processar arquivo:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao processar arquivo. Verifique o formato.",
+          });
+        }
+      }),
+
+    import: protectedProcedure
+      .input(
+        z.object({
+          rows: z.array(
+            z.object({
+              descricao: z.string(),
+              categoria: z.string(),
+              valor: z.number(),
+              localizacao: z.string(),
+              numeroSerie: z.string().optional(),
+              dataAquisicao: z.string().optional(),
+              responsavel: z.string().optional(),
+              imageUrl: z.string().optional(),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          let successCount = 0;
+          let errorCount = 0;
+          const errors: string[] = [];
+
+          for (const row of input.rows) {
+            try {
+              await createPatrimonio({
+                ...row,
+                valor: String(row.valor),
+                dataAquisicao: row.dataAquisicao ? new Date(row.dataAquisicao) : new Date(),
+                responsavel: row.responsavel || "Não informado",
+                userId: ctx.user.id,
+              });
+              successCount++;
+            } catch (error) {
+              errorCount++;
+              errors.push(`Erro ao importar "${row.descricao}": ${error}`);
+            }
+          }
+
+          return {
+            success: true,
+            imported: successCount,
+            failed: errorCount,
+            errors,
+          };
+        } catch (error) {
+          console.error("Erro ao importar dados:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao importar dados para o banco",
+          });
+        }
+      }),
   }),
 
   // ============================================

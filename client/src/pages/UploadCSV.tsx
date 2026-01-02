@@ -1,467 +1,514 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useState, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Edit, Save, X } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import {
+  Upload,
+  FileSpreadsheet,
+  AlertCircle,
+  CheckCircle2,
+  AlertTriangle,
+  Download,
+  X,
+  Loader2,
+  FileText,
+  Table as TableIcon,
+} from "lucide-react";
 
-interface CSVRow {
-  id: string;
-  descricao: string;
-  categoria: string;
-  valor: string;
-  localizacao: string;
-  numeroSerie?: string;
-  dataAquisicao: string;
-  responsavel: string;
-  status: "valid" | "warning" | "error";
+type ParsedRow = {
+  index: number;
+  data: Record<string, any>;
   errors: string[];
-  editing: boolean;
-}
+  warnings: string[];
+  isValid: boolean;
+};
+
+type ParsedData = {
+  headers: string[];
+  rows: ParsedRow[];
+  stats: {
+    total: number;
+    valid: number;
+    invalid: number;
+  };
+};
 
 export default function UploadCSV() {
-  const [csvData, setCSVData] = useState<CSVRow[]>([]);
-  const [fileName, setFileName] = useState<string>("");
-  const [saving, setSaving] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [parsedData, setParsedData] = useState<ParsedData | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showOnlyErrors, setShowOnlyErrors] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
 
+  const parseMutation = trpc.csv.parse.useMutation();
+  const importMutation = trpc.csv.import.useMutation();
   const utils = trpc.useUtils();
 
-  const validateRow = (row: any): { status: "valid" | "warning" | "error"; errors: string[] } => {
-    const errors: string[] = [];
-    
-    // Validações obrigatórias
-    if (!row.descricao || row.descricao.trim() === "") {
-      errors.push("Descrição é obrigatória");
-    }
-    if (!row.categoria || row.categoria.trim() === "") {
-      errors.push("Categoria é obrigatória");
-    }
-    if (!row.valor || row.valor.trim() === "") {
-      errors.push("Valor é obrigatório");
-    }
-    if (!row.localizacao || row.localizacao.trim() === "") {
-      errors.push("Localização é obrigatória");
-    }
-    if (!row.responsavel || row.responsavel.trim() === "") {
-      errors.push("Responsável é obrigatório");
-    }
-    if (!row.dataAquisicao || row.dataAquisicao.trim() === "") {
-      errors.push("Data de aquisição é obrigatória");
-    }
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
 
-    // Validação de data
-    if (row.dataAquisicao) {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(row.dataAquisicao)) {
-        errors.push("Data deve estar no formato YYYY-MM-DD");
-      }
-    }
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
 
-    if (errors.length > 0) {
-      return { status: "error", errors };
-    }
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
 
-    // Avisos (não impedem o salvamento)
-    const warnings: string[] = [];
-    if (!row.numeroSerie || row.numeroSerie.trim() === "") {
-      warnings.push("Número de série não informado");
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      processFile(droppedFile);
     }
-
-    if (warnings.length > 0) {
-      return { status: "warning", errors: warnings };
-    }
-
-    return { status: "valid", errors: [] };
-  };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      processFile(selectedFile);
+    }
+  };
 
-    if (!file.name.endsWith(".csv")) {
-      toast.error("Por favor, selecione um arquivo CSV");
+  const processFile = async (selectedFile: File) => {
+    // Validar tipo de arquivo
+    const validTypes = [
+      "text/csv",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ];
+    const validExtensions = [".csv", ".xlsx", ".xls"];
+    const hasValidExtension = validExtensions.some(ext => selectedFile.name.toLowerCase().endsWith(ext));
+
+    if (!validTypes.includes(selectedFile.type) && !hasValidExtension) {
+      toast.error("Formato de arquivo inválido. Use CSV, XLSX ou XLS.");
       return;
     }
 
-    setFileName(file.name);
+    // Validar tamanho (max 10MB)
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Tamanho máximo: 10MB");
+      return;
+    }
 
+    setFile(selectedFile);
+    setParsedData(null);
+
+    // Converter para base64 e enviar para o backend
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+
       try {
-        const text = event.target?.result as string;
-        const lines = text.split("\n").filter((line) => line.trim() !== "");
-        
-        if (lines.length < 2) {
-          toast.error("Arquivo CSV vazio ou inválido");
-          return;
-        }
+        const result = await parseMutation.mutateAsync({
+          base64,
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type || "text/csv",
+        });
 
-        const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
-        const rows: CSVRow[] = [];
-
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""));
-          const row: any = {};
-          
-          headers.forEach((header, index) => {
-            row[header] = values[index] || "";
-          });
-
-          const validation = validateRow(row);
-          
-          rows.push({
-            id: `temp-${i}`,
-            descricao: row.descricao || "",
-            categoria: row.categoria || "",
-            valor: row.valor || "",
-            localizacao: row.localizacao || "",
-            numeroSerie: row.numeroSerie || "",
-            dataAquisicao: row.dataAquisicao || "",
-            responsavel: row.responsavel || "",
-            status: validation.status,
-            errors: validation.errors,
-            editing: false,
-          });
-        }
-
-        setCSVData(rows);
-        toast.success(`${rows.length} linhas carregadas do CSV`);
+        setParsedData(result);
+        toast.success(`Arquivo processado: ${result.stats.total} registros encontrados`);
       } catch (error) {
-        toast.error("Erro ao processar arquivo CSV");
+        toast.error("Erro ao processar arquivo");
         console.error(error);
       }
     };
 
-    reader.readAsText(file);
+    reader.readAsDataURL(selectedFile);
   };
 
-  const handleEdit = (index: number) => {
-    setCSVData((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, editing: true } : row))
-    );
+  const handleRemoveFile = () => {
+    setFile(null);
+    setParsedData(null);
+    setShowOnlyErrors(false);
   };
 
-  const handleSaveEdit = (index: number) => {
-    const row = csvData[index];
-    const validation = validateRow(row);
-    
-    setCSVData((prev) =>
-      prev.map((r, i) =>
-        i === index
-          ? { ...r, status: validation.status, errors: validation.errors, editing: false }
-          : r
-      )
-    );
-  };
+  const handleImport = async () => {
+    if (!parsedData) return;
 
-  const handleCancelEdit = (index: number) => {
-    setCSVData((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, editing: false } : row))
-    );
-  };
+    // Filtrar apenas linhas válidas
+    const validRows = parsedData.rows.filter(row => row.isValid);
 
-  const handleFieldChange = (index: number, field: keyof CSVRow, value: string) => {
-    setCSVData((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row))
-    );
-  };
-
-  const handleRemoveRow = (index: number) => {
-    setCSVData((prev) => prev.filter((_, i) => i !== index));
-    toast.success("Linha removida");
-  };
-
-  const handleSaveAll = async () => {
-    const hasErrors = csvData.some((row) => row.status === "error");
-    
-    if (hasErrors) {
-      toast.error("Corrija os erros antes de salvar");
+    if (validRows.length === 0) {
+      toast.error("Nenhum registro válido para importar");
       return;
     }
 
-    setSaving(true);
+    setImporting(true);
+    setImportProgress(0);
+
     try {
-      // TODO: Implementar salvamento em lote no backend
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Mapear dados para o formato esperado
+      const mappedRows = validRows.map(row => {
+        const data = row.data;
+        
+        // Normalizar nomes de campos (case-insensitive)
+        const getValue = (field: string) => {
+          const keys = Object.keys(data);
+          const matchingKey = keys.find(k => k.toLowerCase() === field.toLowerCase());
+          return matchingKey ? data[matchingKey] : "";
+        };
+
+        const valor = getValue("valor");
+        const valorNum = Number(String(valor).replace(/[^0-9.,]/g, "").replace(",", "."));
+
+        return {
+          descricao: getValue("descricao") || "",
+          categoria: getValue("categoria") || "",
+          valor: valorNum,
+          localizacao: getValue("localizacao") || getValue("localização") || "",
+          numeroSerie: getValue("numeroSerie") || getValue("numero_serie") || getValue("número de série") || undefined,
+          dataAquisicao: getValue("dataAquisicao") || getValue("data_aquisicao") || getValue("data de aquisição") || undefined,
+          responsavel: getValue("responsavel") || getValue("responsável") || undefined,
+          imageUrl: getValue("imageUrl") || getValue("imagem") || undefined,
+        };
+      });
+
+      // Simular progresso
+      const progressInterval = setInterval(() => {
+        setImportProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      const result = await importMutation.mutateAsync({ rows: mappedRows });
+
+      clearInterval(progressInterval);
+      setImportProgress(100);
+
+      await utils.patrimonio.list.invalidate();
+
+      toast.success(`Importação concluída! ${result.imported} registros importados.`);
       
-      toast.success(`${csvData.length} patrimônios salvos com sucesso!`);
-      setCSVData([]);
-      setFileName("");
-      utils.patrimonio.list.invalidate();
+      if (result.failed > 0) {
+        toast.warning(`${result.failed} registros falharam na importação.`);
+      }
+
+      // Resetar após sucesso
+      setTimeout(() => {
+        handleRemoveFile();
+        setImporting(false);
+        setImportProgress(0);
+      }, 2000);
     } catch (error) {
-      toast.error("Erro ao salvar patrimônios");
-    } finally {
-      setSaving(false);
+      toast.error("Erro ao importar dados");
+      console.error(error);
+      setImporting(false);
+      setImportProgress(0);
     }
   };
 
-  const validCount = csvData.filter((r) => r.status === "valid").length;
-  const warningCount = csvData.filter((r) => r.status === "warning").length;
-  const errorCount = csvData.filter((r) => r.status === "error").length;
+  const downloadTemplate = () => {
+    const template = `descricao,categoria,valor,localizacao,numeroSerie,dataAquisicao,responsavel
+Monitor Dell 24",Monitor,2500.00,Sala 101,MON-001,2024-01-15,João Silva
+Impressora HP LaserJet,Impressora,4500.00,Sala 102,IMP-001,2024-01-20,Maria Santos`;
+
+    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "template_patrimonio.csv";
+    link.click();
+  };
+
+  const filteredRows = parsedData
+    ? showOnlyErrors
+      ? parsedData.rows.filter(row => !row.isValid)
+      : parsedData.rows
+    : [];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0066CC] to-[#00AA44] bg-clip-text text-transparent">
-            Upload CSV
-          </h1>
+          <h1 className="text-3xl font-bold">Upload de CSV</h1>
           <p className="text-muted-foreground mt-2">
-            Importe patrimônios em massa através de arquivo CSV
+            Importe patrimônios em massa através de arquivos CSV ou Excel
           </p>
         </div>
 
-        {/* Upload */}
+        {/* Instruções e Template */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-primary" />
-              Selecionar Arquivo CSV
+              <FileText className="h-5 w-5" />
+              Instruções
             </CardTitle>
             <CardDescription>
-              O arquivo deve conter as colunas: descricao, categoria, valor, localizacao, dataAquisicao, responsavel, numeroSerie (opcional)
+              Siga estas orientações para garantir uma importação bem-sucedida
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
-              <label htmlFor="csv-file" className="cursor-pointer">
-                <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  {fileName || "Clique para selecionar um arquivo CSV"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Formato: CSV com cabeçalho
-                </p>
-                <input
-                  id="csv-file"
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-semibold">Formatos aceitos:</h4>
+              <div className="flex gap-2">
+                <Badge variant="secondary">CSV (.csv)</Badge>
+                <Badge variant="secondary">Excel (.xlsx)</Badge>
+                <Badge variant="secondary">Excel 97-2003 (.xls)</Badge>
+              </div>
             </div>
+
+            <div className="space-y-2">
+              <h4 className="font-semibold">Campos obrigatórios:</h4>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li><strong>descricao</strong> - Descrição do patrimônio</li>
+                <li><strong>categoria</strong> - Categoria do equipamento (Monitor, Impressora, etc.)</li>
+                <li><strong>valor</strong> - Valor em reais (use ponto ou vírgula como decimal)</li>
+                <li><strong>localizacao</strong> - Local onde está o patrimônio</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-semibold">Campos opcionais:</h4>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li><strong>numeroSerie</strong> - Número de série do equipamento</li>
+                <li><strong>dataAquisicao</strong> - Data de aquisição (formato: YYYY-MM-DD)</li>
+                <li><strong>responsavel</strong> - Nome do responsável pelo patrimônio</li>
+              </ul>
+            </div>
+
+            <Button onClick={downloadTemplate} variant="outline" className="w-full sm:w-auto">
+              <Download className="mr-2 h-4 w-4" />
+              Baixar Template CSV
+            </Button>
           </CardContent>
         </Card>
 
+        {/* Área de Upload */}
+        {!file && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Selecionar Arquivo</CardTitle>
+              <CardDescription>Arraste e solte ou clique para selecionar</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-300 hover:border-primary/50"
+                }`}
+              >
+                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-lg font-medium mb-2">
+                  Arraste seu arquivo aqui
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  ou clique para selecionar
+                </p>
+                <Label htmlFor="file-upload">
+                  <Button variant="outline" asChild>
+                    <span>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Selecionar Arquivo
+                    </span>
+                  </Button>
+                </Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Arquivo Selecionado */}
+        {file && !parsedData && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileSpreadsheet className="h-8 w-8 text-primary" />
+                  <div>
+                    <p className="font-medium">{file.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(file.size / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
+                </div>
+                {parseMutation.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (
+                  <Button variant="ghost" size="icon" onClick={handleRemoveFile}>
+                    <X className="h-5 w-5" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estatísticas */}
-        {csvData.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {parsedData && (
+          <div className="grid gap-4 md:grid-cols-3">
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Válidos</p>
-                    <p className="text-2xl font-bold text-green-600">{validCount}</p>
-                  </div>
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
-                </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Total de Registros</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{parsedData.stats.total}</div>
               </CardContent>
             </Card>
+
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Avisos</p>
-                    <p className="text-2xl font-bold text-yellow-600">{warningCount}</p>
-                  </div>
-                  <AlertTriangle className="h-8 w-8 text-yellow-600" />
-                </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  Registros Válidos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{parsedData.stats.valid}</div>
               </CardContent>
             </Card>
+
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Erros</p>
-                    <p className="text-2xl font-bold text-red-600">{errorCount}</p>
-                  </div>
-                  <X className="h-8 w-8 text-red-600" />
-                </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  Registros Inválidos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{parsedData.stats.invalid}</div>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Validação e Edição */}
-        {csvData.length > 0 && (
+        {/* Preview dos Dados */}
+        {parsedData && (
           <Card>
             <CardHeader>
-              <CardTitle>Validação de Dados</CardTitle>
-              <CardDescription>
-                Revise e edite os dados antes de salvar no banco
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <TableIcon className="h-5 w-5" />
+                    Preview dos Dados
+                  </CardTitle>
+                  <CardDescription>
+                    Revise os dados antes de importar
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={showOnlyErrors ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowOnlyErrors(!showOnlyErrors)}
+                  >
+                    {showOnlyErrors ? "Mostrar Todos" : "Mostrar Apenas Erros"}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleRemoveFile}>
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Localização</TableHead>
-                      <TableHead>Responsável</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {csvData.map((row, index) => (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          {row.status === "valid" && (
-                            <Badge className="bg-green-100 text-green-800">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Válido
-                            </Badge>
-                          )}
-                          {row.status === "warning" && (
-                            <Badge className="bg-yellow-100 text-yellow-800">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Aviso
-                            </Badge>
-                          )}
-                          {row.status === "error" && (
-                            <Badge variant="destructive">
-                              <X className="h-3 w-3 mr-1" />
-                              Erro
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {row.editing ? (
-                            <Input
-                              value={row.descricao}
-                              onChange={(e) => handleFieldChange(index, "descricao", e.target.value)}
-                              className="min-w-[200px]"
-                            />
-                          ) : (
-                            <div>
-                              <p>{row.descricao}</p>
-                              {row.errors.length > 0 && (
-                                <p className="text-xs text-red-600 mt-1">{row.errors.join(", ")}</p>
-                              )}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {row.editing ? (
-                            <Input
-                              value={row.categoria}
-                              onChange={(e) => handleFieldChange(index, "categoria", e.target.value)}
-                            />
-                          ) : (
-                            row.categoria
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {row.editing ? (
-                            <Input
-                              value={row.valor}
-                              onChange={(e) => handleFieldChange(index, "valor", e.target.value)}
-                            />
-                          ) : (
-                            row.valor
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {row.editing ? (
-                            <Input
-                              value={row.localizacao}
-                              onChange={(e) => handleFieldChange(index, "localizacao", e.target.value)}
-                            />
-                          ) : (
-                            row.localizacao
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {row.editing ? (
-                            <Input
-                              value={row.responsavel}
-                              onChange={(e) => handleFieldChange(index, "responsavel", e.target.value)}
-                            />
-                          ) : (
-                            row.responsavel
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {row.editing ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => handleSaveEdit(index)}
-                                >
-                                  <Save className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleCancelEdit(index)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </>
+            <CardContent>
+              <div className="border rounded-lg overflow-auto max-h-[500px]">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Linha</th>
+                      <th className="px-4 py-3 text-left font-medium">Status</th>
+                      {parsedData.headers.map((header, i) => (
+                        <th key={i} className="px-4 py-3 text-left font-medium whitespace-nowrap">
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRows.map((row, i) => (
+                      <tr
+                        key={i}
+                        className={`border-t ${
+                          !row.isValid
+                            ? "bg-red-50"
+                            : row.warnings.length > 0
+                            ? "bg-yellow-50"
+                            : ""
+                        }`}
+                      >
+                        <td className="px-4 py-3">{row.index}</td>
+                        <td className="px-4 py-3">
+                          {row.isValid ? (
+                            row.warnings.length > 0 ? (
+                              <AlertTriangle className="h-4 w-4 text-yellow-600" />
                             ) : (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleEdit(index)}
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleRemoveRow(index)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            )
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                          )}
+                        </td>
+                        {parsedData.headers.map((header, j) => (
+                          <td key={j} className="px-4 py-3 whitespace-nowrap">
+                            {row.data[header] || "-"}
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
 
-              {errorCount > 0 && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
+              {/* Alertas de Erro */}
+              {parsedData.stats.invalid > 0 && (
+                <Alert className="mt-4" variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Existem {errorCount} linhas com erros. Corrija-as antes de salvar.
+                    <strong>{parsedData.stats.invalid} registro(s) com erro.</strong>
+                    <br />
+                    Apenas registros válidos serão importados. Corrija os erros no arquivo e faça upload novamente para importar todos os registros.
                   </AlertDescription>
                 </Alert>
               )}
 
-              <Button
-                onClick={handleSaveAll}
-                disabled={errorCount > 0 || saving}
-                className="w-full bg-gradient-to-r from-[#0066CC] to-[#00AA44]"
-              >
-                {saving ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Salvando...
-                  </div>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar {csvData.length} Patrimônios no Banco de Dados
-                  </>
-                )}
-              </Button>
+              {/* Botões de Ação */}
+              <div className="flex gap-3 mt-6">
+                <Button
+                  onClick={handleImport}
+                  disabled={parsedData.stats.valid === 0 || importing}
+                  className="flex-1"
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Importando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Importar {parsedData.stats.valid} Registro(s) Válido(s)
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Barra de Progresso */}
+              {importing && (
+                <div className="mt-4 space-y-2">
+                  <Progress value={importProgress} />
+                  <p className="text-sm text-center text-muted-foreground">
+                    Importando... {importProgress}%
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
