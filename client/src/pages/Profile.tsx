@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,13 +146,7 @@ export default function Profile() {
                   <span className="font-medium">Função:</span>
                   <span className="ml-2 capitalize">{user?.role}</span>
                 </div>
-                <div className="flex items-center text-sm">
-                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="font-medium">Membro desde:</span>
-                  <span className="ml-2">
-                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("pt-BR") : "-"}
-                  </span>
-                </div>
+
               </div>
             </CardContent>
           </Card>

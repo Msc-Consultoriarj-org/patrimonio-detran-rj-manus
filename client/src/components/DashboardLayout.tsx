@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -112,9 +112,10 @@ function DashboardLayoutContent({
   children,
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
-  const { user } = useAuth();
+  const { user, logout: authLogout } = useAuth();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
+      authLogout(); // Limpa localStorage
       setLocation("/login");
     },
   });

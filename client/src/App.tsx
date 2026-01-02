@@ -2,13 +2,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
-import { useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import ChangePassword from "./pages/ChangePassword";
 import Profile from "./pages/Profile";
 import Patrimonios from "./pages/Patrimonios";
 import Sugestoes from "./pages/Sugestoes";
@@ -18,7 +16,7 @@ import UploadCSV from "./pages/UploadCSV";
 import Levantamento from "./pages/Levantamento";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
 
   // Mostrar loading enquanto verifica autenticação
@@ -31,7 +29,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }
 
   // Se não está autenticado, redireciona para login
-  if (!user) {
+  if (!isAuthenticated) {
     setLocation("/login");
     return null;
   }
@@ -79,10 +77,12 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

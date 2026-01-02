@@ -3,33 +3,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [, setLocation] = useLocation();
-  const utils = trpc.useUtils();
-  const meQuery = trpc.auth.me.useQuery();
+  const { login, isAuthenticated, loading } = useAuth();
 
   // Se já está autenticado, redireciona para home
-  if (!meQuery.isLoading && meQuery.data) {
-    setLocation("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      setLocation("/");
+    }
+  }, [loading, isAuthenticated, setLocation]);
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async () => {
-      toast.success("Login realizado com sucesso!");
-      // Invalida a query auth.me para forçar recarregamento do usuário
-      await utils.auth.me.invalidate();
-      // Refetch para garantir que o usuário seja carregado antes de redirecionar
-      await utils.auth.me.refetch();
-      // Aguarda 500ms para garantir que o estado foi completamente atualizado
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Redireciona para a home após login bem-sucedido
-      setLocation("/");
+    onSuccess: (data) => {
+      if (data.success && data.user) {
+        // Salva o usuário no AuthContext (que usa localStorage)
+        login(data.user);
+        toast.success("Login realizado com sucesso!");
+        // Redireciona para a home após login bem-sucedido
+        setLocation("/");
+      }
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao fazer login");
@@ -44,6 +43,15 @@ export default function Login() {
     }
     loginMutation.mutate({ username: username.trim() });
   };
+
+  // Mostra loading enquanto verifica autenticação inicial
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066CC] via-[#0088AA] to-[#00AA44]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066CC] via-[#0088AA] to-[#00AA44] p-4">

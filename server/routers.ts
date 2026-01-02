@@ -82,7 +82,7 @@ export const appRouter = router({
 
     login: publicProcedure
       .input(loginSchema)
-      .mutation(async ({ input, ctx }) => {
+      .mutation(async ({ input }) => {
         const user = await getUserByUsername(input.username);
 
         if (!user) {
@@ -92,15 +92,8 @@ export const appRouter = router({
           });
         }
 
-        // Create session token (simplified - using user ID)
-        const token = Buffer.from(JSON.stringify({ userId: user.id })).toString("base64");
-
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, token, {
-          ...cookieOptions,
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        });
-
+        // Retorna dados do usuário diretamente (sem cookies)
+        // O frontend gerencia a sessão via localStorage
         return {
           success: true,
           user: {
@@ -147,9 +140,9 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+    logout: publicProcedure.mutation(() => {
+      // O frontend gerencia a sessão via localStorage
+      // Apenas retorna sucesso - o frontend limpa o localStorage
       return { success: true } as const;
     }),
   }),
