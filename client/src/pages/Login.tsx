@@ -8,11 +8,14 @@ import { toast } from "sonner";
 
 export default function Login() {
   const [username, setUsername] = useState("");
+  const utils = trpc.useUtils();
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Login realizado com sucesso!");
-      // Redireciona para a home após login bem-sucedido usando window.location para forçar reload
+      // Invalida a query auth.me para forçar recarregamento do usuário
+      await utils.auth.me.invalidate();
+      // Redireciona para a home após login bem-sucedido
       window.location.href = "/";
     },
     onError: (error) => {

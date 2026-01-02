@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { storagePut } from "./storage";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -54,6 +55,7 @@ const patrimonioSchema = z.object({
   numeroSerie: z.string().optional(),
   dataAquisicao: z.date(),
   responsavel: z.string().min(1, "Responsável é obrigatório"),
+  imageUrl: z.string().optional(),
 });
 
 const searchPatrimoniosSchema = z.object({
@@ -271,6 +273,44 @@ export const appRouter = router({
         }
         await updateSugestaoStatus(input.id, input.status);
         return { success: true };
+      }),
+  }),
+
+  // ============================================
+  // Upload Router
+  // ============================================
+  upload: router({
+    image: protectedProcedure
+      .input(
+        z.object({
+          base64: z.string(),
+          fileName: z.string(),
+          mimeType: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          // Converter base64 para Buffer
+          const base64Data = input.base64.replace(/^data:image\/\w+;base64,/, "");
+          const buffer = Buffer.from(base64Data, "base64");
+
+          // Gerar nome único para o arquivo
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substring(7);
+          const fileExtension = input.fileName.split(".").pop() || "jpg";
+          const fileKey = `patrimonios/${ctx.user.id}/${timestamp}-${randomSuffix}.${fileExtension}`;
+
+          // Upload para S3
+          const { url } = await storagePut(fileKey, buffer, input.mimeType);
+
+          return { success: true, url };
+        } catch (error) {
+          console.error("Erro ao fazer upload da imagem:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao fazer upload da imagem",
+          });
+        }
       }),
   }),
 });

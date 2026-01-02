@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Plus, Search, Pencil, Trash2, Package } from "lucide-react";
+import { Loader2, Plus, Search, Pencil, Trash2, Package, X, Image as ImageIcon } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import type { Patrimonio } from "../../../drizzle/schema";
 
@@ -77,12 +77,17 @@ export default function Patrimonios() {
     dataAquisicao: new Date().toISOString().split("T")[0],
     responsavel: "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const { data: patrimonios, isLoading } = trpc.patrimonio.search.useQuery({
     searchTerm,
     categoria: categoriaFilter || undefined,
     localizacao: localizacaoFilter || undefined,
   });
+
+  const uploadImageMutation = trpc.upload.image.useMutation();
 
   const createMutation = trpc.patrimonio.create.useMutation({
     onSuccess: () => {
@@ -130,15 +135,40 @@ export default function Patrimonios() {
       dataAquisicao: new Date().toISOString().split("T")[0],
       responsavel: "",
     });
+    setImageFile(null);
+    setImagePreview(null);
     setSelectedPatrimonio(null);
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate({
-      ...formData,
-      dataAquisicao: new Date(formData.dataAquisicao),
-    });
+    setUploading(true);
+
+    try {
+      let imageUrl: string | undefined;
+
+      // Upload da imagem se houver
+      if (imageFile && imagePreview) {
+        const uploadResult = await uploadImageMutation.mutateAsync({
+          base64: imagePreview,
+          fileName: imageFile.name,
+          mimeType: imageFile.type,
+        });
+        imageUrl = uploadResult.url;
+      }
+
+      // Criar patrimônio
+      createMutation.mutate({
+        ...formData,
+        dataAquisicao: new Date(formData.dataAquisicao),
+        imageUrl,
+      });
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Erro ao fazer upload da imagem");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleEdit = (patrimonio: Patrimonio) => {
@@ -152,20 +182,45 @@ export default function Patrimonios() {
       dataAquisicao: new Date(patrimonio.dataAquisicao).toISOString().split("T")[0],
       responsavel: patrimonio.responsavel,
     });
+    // Carregar imagem existente se houver
+    if (patrimonio.imageUrl) {
+      setImagePreview(patrimonio.imageUrl);
+    }
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatrimonio) return;
+    setUploading(true);
 
-    updateMutation.mutate({
-      id: selectedPatrimonio.id,
-      data: {
-        ...formData,
-        dataAquisicao: new Date(formData.dataAquisicao),
-      },
-    });
+    try {
+      let imageUrl: string | undefined = selectedPatrimonio.imageUrl || undefined;
+
+      // Upload de nova imagem se houver
+      if (imageFile && imagePreview && !imagePreview.startsWith("http")) {
+        const uploadResult = await uploadImageMutation.mutateAsync({
+          base64: imagePreview,
+          fileName: imageFile.name,
+          mimeType: imageFile.type,
+        });
+        imageUrl = uploadResult.url;
+      }
+
+      updateMutation.mutate({
+        id: selectedPatrimonio.id,
+        data: {
+          ...formData,
+          dataAquisicao: new Date(formData.dataAquisicao),
+          imageUrl,
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Erro ao fazer upload da imagem");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDelete = (patrimonio: Patrimonio) => {
@@ -176,6 +231,33 @@ export default function Patrimonios() {
   const confirmDelete = () => {
     if (!selectedPatrimonio) return;
     deleteMutation.mutate({ id: selectedPatrimonio.id });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione apenas arquivos de imagem");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   return (
@@ -406,6 +488,38 @@ export default function Patrimonios() {
                   required
                 />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="image-create">Foto do Patrimônio (Opcional)</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
+                  {imagePreview ? (
+                    <div className="relative inline-block">
+                      <img src={imagePreview} alt="Preview" className="max-h-32 rounded-lg" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label htmlFor="image-create" className="cursor-pointer block">
+                      <ImageIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Clique para adicionar foto (máx. 5MB)</p>
+                      <input
+                        id="image-create"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                        disabled={uploading}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button
@@ -418,11 +532,11 @@ export default function Patrimonios() {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? (
+              <Button type="submit" disabled={createMutation.isPending || uploading}>
+                {(createMutation.isPending || uploading) ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Cadastrando...
+                    {uploading ? "Enviando..." : "Cadastrando..."}
                   </>
                 ) : (
                   "Cadastrar"
@@ -518,6 +632,38 @@ export default function Patrimonios() {
                   required
                 />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="image-edit">Foto do Patrimônio (Opcional)</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
+                  {imagePreview ? (
+                    <div className="relative inline-block">
+                      <img src={imagePreview} alt="Preview" className="max-h-32 rounded-lg" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label htmlFor="image-edit" className="cursor-pointer block">
+                      <ImageIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Clique para adicionar foto (máx. 5MB)</p>
+                      <input
+                        id="image-edit"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                        disabled={uploading}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button
@@ -530,8 +676,8 @@ export default function Patrimonios() {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? (
+              <Button type="submit" disabled={updateMutation.isPending || uploading}>
+                {(updateMutation.isPending || uploading) ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Salvando...

@@ -176,3 +176,43 @@
 - [x] Adicionar novas abas ao menu do dashboard
 - [x] Atualizar rotas no App.tsx
 - [x] Garantir proteção de rotas autenticadas
+
+
+## Aba de Levantamento
+
+### Backend
+- [x] Implementar função de upload de imagem para S3 usando storagePut
+- [x] Criar helper no db.ts para salvar patrimônio com imageUrl
+- [x] Adicionar validação de imagem no backend
+
+### Frontend - Página de Levantamento
+- [x] Criar página Levantamento.tsx com formulário completo
+- [x] Integrar upload de imagem no formulário
+- [x] Preview de imagem antes do envio
+- [x] Validação de formato e tamanho de imagem
+- [x] Todos os campos do patrimônio em um único formulário
+- [x] Feedback visual de progresso de upload
+
+### Integração com Patrimônios Existente
+- [x] Adicionar campo de upload de imagem no formulário de criar patrimônio
+- [x] Adicionar campo de upload de imagem no formulário de editar patrimônio
+- [x] Exibir imagem na listagem de patrimônios
+- [x] Permitir visualização ampliada da imagem
+
+### Navegação
+- [x] Adicionar aba "Levantamento" no menu do dashboard
+- [x] Criar rota /levantamento no App.tsx
+- [x] Garantir proteção de rota autenticada
+
+
+## Problemas Críticos Reportados
+
+### Sistema de Login
+- [x] Corrigir redirecionamento após login (está voltando para /login mesmo com sucesso)
+- [x] Verificar fluxo de autenticação e cookies
+- [x] Garantir que após login redirecione para dashboard (/)
+
+### Logo do Detran
+- [x] Corrigir caminho da logo que está quebrada
+- [x] Verificar se arquivo LogoDetran.png está no diretório correto
+- [x] Atualizar referências da logo em todos os componentes

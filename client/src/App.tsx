@@ -15,6 +15,7 @@ import Sugestoes from "./pages/Sugestoes";
 import UploadImagem from "./pages/UploadImagem";
 import Relatorios from "./pages/Relatorios";
 import UploadCSV from "./pages/UploadCSV";
+import Levantamento from "./pages/Levantamento";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
@@ -51,6 +52,9 @@ function Router() {
       </Route>
       <Route path="/patrimonios">
         <ProtectedRoute component={Patrimonios} />
+      </Route>
+      <Route path="/levantamento">
+        <ProtectedRoute component={Levantamento} />
       </Route>
       <Route path="/sugestoes">
         <ProtectedRoute component={Sugestoes} />

@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Home, LogOut, PanelLeft, Package, Lightbulb, Image, FileText, Upload } from "lucide-react";
+import { Home, LogOut, PanelLeft, Package, Lightbulb, Image, FileText, Upload, ClipboardList } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -30,6 +30,7 @@ import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: Home, label: "Início", path: "/" },
+  { icon: ClipboardList, label: "Levantamento", path: "/levantamento" },
   { icon: Package, label: "Patrimônios", path: "/patrimonios" },
   { icon: Lightbulb, label: "Sugestões", path: "/sugestoes" },
   { icon: Image, label: "Upload Imagem", path: "/upload-imagem" },
@@ -181,13 +182,13 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  <img src="/logo-detran-rj.png" alt="Detran-RJ" className="h-8 w-auto" />
+                  <img src="/LogoDetran.png" alt="Detran-RJ" className="h-8 w-auto" />
                   <span className="font-semibold tracking-tight truncate text-white text-sm">
                     Sistema Patrimônio DTIC
                   </span>
                 </div>
               ) : (
-                <img src="/logo-detran-rj.png" alt="Detran-RJ" className="h-8 w-auto" />
+                <img src="/LogoDetran.png" alt="Detran-RJ" className="h-8 w-auto" />
               )}
             </div>
           </SidebarHeader>
