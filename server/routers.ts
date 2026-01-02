@@ -102,6 +102,7 @@ export const appRouter = router({
             name: user.name,
             email: user.email,
             role: user.role,
+            hasCompletedOnboarding: user.hasCompletedOnboarding === 1,
           },
         };
       }),
@@ -145,6 +146,12 @@ export const appRouter = router({
       // Apenas retorna sucesso - o frontend limpa o localStorage
       return { success: true } as const;
     }),
+
+    completeOnboarding: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await updateUserProfile(ctx.user.id, { hasCompletedOnboarding: 1 });
+        return { success: true };
+      }),
   }),
 
   // ============================================

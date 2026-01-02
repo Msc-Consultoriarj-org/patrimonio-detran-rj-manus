@@ -27,15 +27,16 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import Onboarding from "./Onboarding";
 
 const menuItems = [
-  { icon: Home, label: "Início", path: "/" },
-  { icon: ClipboardList, label: "Levantamento", path: "/levantamento" },
-  { icon: Package, label: "Patrimônios", path: "/patrimonios" },
-  { icon: Lightbulb, label: "Sugestões", path: "/sugestoes" },
-  { icon: Image, label: "Upload Imagem", path: "/upload-imagem" },
-  { icon: FileText, label: "Relatórios", path: "/relatorios" },
-  { icon: Upload, label: "Upload CSV", path: "/upload-csv" },
+  { icon: Home, label: "Início", path: "/", dataTour: "dashboard" },
+  { icon: ClipboardList, label: "Levantamento", path: "/levantamento", dataTour: "levantamento" },
+  { icon: Package, label: "Patrimônios", path: "/patrimonios", dataTour: "patrimonios" },
+  { icon: Lightbulb, label: "Sugestões", path: "/sugestoes", dataTour: "sugestoes" },
+  { icon: Image, label: "Upload Imagem", path: "/upload-imagem", dataTour: "upload-imagem" },
+  { icon: FileText, label: "Relatórios", path: "/relatorios", dataTour: "relatorios" },
+  { icon: Upload, label: "Upload CSV", path: "/upload-csv", dataTour: "upload-csv" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -127,6 +128,29 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const [runOnboarding, setRunOnboarding] = useState(false);
+  const completeOnboardingMutation = trpc.auth.completeOnboarding.useMutation();
+
+  // Verificar se deve mostrar onboarding
+  useEffect(() => {
+    if (user && !user.hasCompletedOnboarding && location === "/") {
+      // Aguardar 1 segundo para garantir que a página carregou
+      const timer = setTimeout(() => {
+        setRunOnboarding(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, location]);
+
+  const handleOnboardingComplete = () => {
+    setRunOnboarding(false);
+    completeOnboardingMutation.mutate();
+  };
+
+  const handleOnboardingSkip = () => {
+    setRunOnboarding(false);
+    completeOnboardingMutation.mutate();
+  };
 
   useEffect(() => {
     if (isCollapsed) {
@@ -205,6 +229,7 @@ function DashboardLayoutContent({
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
+                      data-tour={item.dataTour}
                     >
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
@@ -238,11 +263,18 @@ function DashboardLayoutContent({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
+                  onClick={() => setRunOnboarding(true)}
+                  className="cursor-pointer"
+                >
+                  <Lightbulb className="mr-2 h-4 w-4" />
+                  <span>Ver Tour Novamente</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -275,6 +307,12 @@ function DashboardLayoutContent({
         )}
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
+      
+      <Onboarding
+        run={runOnboarding}
+        onComplete={handleOnboardingComplete}
+        onSkip={handleOnboardingSkip}
+      />
     </>
   );
 }

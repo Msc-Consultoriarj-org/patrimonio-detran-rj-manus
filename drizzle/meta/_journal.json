@@ -22,6 +22,13 @@
       "when": 1767372434919,
       "tag": "0002_broad_crystal",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1767376854918,
+      "tag": "0003_broken_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

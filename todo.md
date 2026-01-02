@@ -400,3 +400,32 @@
 - [x] Ajustar layout responsivo para mobile
 - [ ] Testar em dispositivo móvel
 
+
+
+## Feature - Sistema de Onboarding para Novos Usuários
+
+### Backend
+- [x] Adicionar campo hasCompletedOnboarding na tabela users
+- [x] Criar migration para adicionar campo
+- [x] Criar endpoint tRPC para marcar onboarding como concluído
+- [x] Atualizar query auth.me para retornar hasCompletedOnboarding
+
+### Frontend - Componente de Onboarding
+- [x] Instalar biblioteca react-joyride para tour guiado
+- [x] Criar componente Onboarding.tsx
+- [x] Criar steps do tour (Dashboard, Patrimônios, Levantamento, Relatórios)
+- [x] Adicionar botão "Pular Tour"
+- [x] Adicionar botão "Próximo" e "Anterior"
+- [x] Estilizar tooltips com cores do Detran
+
+### Integração
+- [x] Verificar se usuário completou onboarding no login
+- [x] Mostrar onboarding automaticamente para novos usuários
+- [x] Salvar estado de conclusão no banco
+- [x] Adicionar opção de "Ver Tour Novamente" no menu de usuário
+
+### Botão de Logout
+- [x] Adicionar botão de logout visível no DashboardLayout
+- [ ] Implementar confirmação antes de fazer logout
+- [ ] Testar logout em todos os navegadores
+

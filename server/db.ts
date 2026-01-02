@@ -117,7 +117,7 @@ export async function updateUserPassword(userId: number, passwordHash: string) {
     .where(eq(users.id, userId));
 }
 
-export async function updateUserProfile(userId: number, data: { name?: string; email?: string }) {
+export async function updateUserProfile(userId: number, data: { name?: string; email?: string; hasCompletedOnboarding?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
