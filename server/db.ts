@@ -1,4 +1,4 @@
-import { eq, like, or, and, desc } from "drizzle-orm";
+import { eq, like, sql, and, desc, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, patrimonios, InsertPatrimonio, sugestoes, InsertSugestao } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -264,4 +264,38 @@ export async function updateSugestaoStatus(id: number, status: "pendente" | "em_
   await db.update(sugestoes)
     .set({ status, updatedAt: new Date() })
     .where(eq(sugestoes.id, id));
+}
+
+// ============================================
+// Analytics Helpers
+// ============================================
+
+export async function getPatrimoniosByCategoria() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select({
+    categoria: patrimonios.categoria,
+    count: sql<number>`COUNT(*)`.as('count'),
+    totalValor: sql<number>`SUM(${patrimonios.valor})`.as('totalValor')
+  })
+    .from(patrimonios)
+    .groupBy(patrimonios.categoria);
+
+  return result;
+}
+
+export async function getPatrimoniosByLocalizacao() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select({
+    localizacao: patrimonios.localizacao,
+    count: sql<number>`COUNT(*)`.as('count'),
+    totalValor: sql<number>`SUM(${patrimonios.valor})`.as('totalValor')
+  })
+    .from(patrimonios)
+    .groupBy(patrimonios.localizacao);
+
+  return result;
 }

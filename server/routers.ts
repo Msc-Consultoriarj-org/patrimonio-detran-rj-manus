@@ -21,6 +21,8 @@ import {
   getAllSugestoes,
   getSugestoesByUserId,
   updateSugestaoStatus,
+  getPatrimoniosByCategoria,
+  getPatrimoniosByLocalizacao,
 } from "./db";
 
 // ============================================
@@ -274,6 +276,21 @@ export const appRouter = router({
         await updateSugestaoStatus(input.id, input.status);
         return { success: true };
       }),
+  }),
+
+  // ============================================
+  // Analytics Router
+  // ============================================
+  analytics: router({
+    byCategoria: protectedProcedure.query(async () => {
+      const data = await getPatrimoniosByCategoria();
+      return data;
+    }),
+
+    byLocalizacao: protectedProcedure.query(async () => {
+      const data = await getPatrimoniosByLocalizacao();
+      return data;
+    }),
   }),
 
   // ============================================

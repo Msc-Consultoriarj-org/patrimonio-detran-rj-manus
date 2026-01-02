@@ -216,3 +216,29 @@
 - [x] Corrigir caminho da logo que está quebrada
 - [x] Verificar se arquivo LogoDetran.png está no diretório correto
 - [x] Atualizar referências da logo em todos os componentes
+
+
+## Dashboard Analítico com Gráficos
+
+### Backend - Queries Agregadas
+- [x] Criar query para obter distribuição de patrimônios por categoria
+- [x] Criar query para obter valor total por categoria
+- [x] Criar query para obter distribuição de patrimônios por localização
+- [x] Criar query para obter valor total por localização
+- [x] Adicionar routers tRPC para dados agregados
+
+### Frontend - Componentes de Gráficos
+- [x] Instalar e configurar Recharts
+- [x] Criar gráfico de pizza para distribuição por categoria
+- [x] Criar gráfico de barras para valor por categoria
+- [x] Criar gráfico de pizza para distribuição por localização
+- [x] Criar gráfico de barras para valor por localização
+- [x] Adicionar cores da identidade visual do Detran nos gráficos
+
+### Página Home
+- [x] Redesenhar layout da página Home para dashboard analítico
+- [x] Adicionar seção de gráficos de categoria
+- [x] Adicionar seção de gráficos de localização
+- [x] Manter cards de estatísticas gerais
+- [x] Adicionar tooltips informativos nos gráficos
+- [x] Garantir responsividade em mobile
