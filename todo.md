@@ -311,3 +311,13 @@
 - [x] Animações de transição entre etapas
 - [x] Mensagens de sucesso/erro com toast
 - [x] Opção de fazer novo upload após importação
+
+
+## Problema Crítico - Login Redirecionando para Si Mesmo
+
+- [x] Investigar por que o login está redirecionando para /login novamente
+- [x] Verificar se o cookie está sendo setado corretamente
+- [x] Verificar se a query auth.me está sendo invalidada
+- [x] Verificar lógica de redirecionamento no App.tsx
+- [x] Testar com todos os usuários (moises, pedro, phelipe)
+- [x] Garantir que após login bem-sucedido redirecione para /

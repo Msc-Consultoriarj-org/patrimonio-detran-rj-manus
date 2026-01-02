@@ -5,9 +5,11 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 export default function Login() {
   const [username, setUsername] = useState("");
+  const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
   const loginMutation = trpc.auth.login.useMutation({
@@ -15,8 +17,12 @@ export default function Login() {
       toast.success("Login realizado com sucesso!");
       // Invalida a query auth.me para forçar recarregamento do usuário
       await utils.auth.me.invalidate();
+      // Refetch para garantir que o usuário seja carregado antes de redirecionar
+      await utils.auth.me.refetch();
+      // Aguarda um pouco para garantir que o estado foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 300));
       // Redireciona para a home após login bem-sucedido
-      window.location.href = "/";
+      setLocation("/");
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao fazer login");
