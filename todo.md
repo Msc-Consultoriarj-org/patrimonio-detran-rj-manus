@@ -321,3 +321,27 @@
 - [x] Verificar lógica de redirecionamento no App.tsx
 - [x] Testar com todos os usuários (moises, pedro, phelipe)
 - [x] Garantir que após login bem-sucedido redirecione para /
+
+
+## Documentação do Projeto
+
+- [x] Atualizar README.md com informações completas do projeto
+- [x] Adicionar seção de funcionalidades implementadas
+- [x] Adicionar instruções de instalação e configuração
+- [x] Adicionar guia de uso do sistema
+- [x] Adicionar informações sobre tecnologias utilizadas
+- [x] Adicionar screenshots do sistema
+- [x] Adicionar informações de credenciais de acesso
+
+
+## Dados de Teste para Validação
+
+- [x] Criar script de seed com 50 patrimônios de teste
+- [x] Incluir categorias variadas (Computador, Monitor, Impressora, Notebook, Servidor, Switch, Roteador, etc.)
+- [x] Incluir localizações por andares (1º ao 5º andar, diferentes salas)
+- [x] Incluir valores diversos (de R$ 500 a R$ 15.000)
+- [x] Agrupar alguns itens para testar gráficos
+- [x] Executar script e validar dados no sistema
+- [x] Testar filtros por categoria e localização
+- [x] Testar busca por descrição e número de série
+- [x] Validar gráficos com dados reais
