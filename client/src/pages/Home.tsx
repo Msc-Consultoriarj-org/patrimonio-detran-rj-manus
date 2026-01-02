@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Package, TrendingUp, MapPin, Layers, Loader2 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 const COLORS = {
   primary: "#0066CC",
@@ -34,33 +34,41 @@ export default function Home() {
   const categorias = new Set(patrimonios?.map(p => p.categoria)).size;
   const localizacoes = new Set(patrimonios?.map(p => p.localizacao)).size;
 
-  // Preparar dados para gráficos
+  // Preparar dados para gráficos - limitar quantidade para melhor visualização
   const categoriaChartData = byCategoria?.map(item => ({
     name: item.categoria,
     value: Number(item.count),
     valor: Number(item.totalValor || 0),
   })) || [];
 
-  const localizacaoChartData = byLocalizacao?.map(item => ({
-    name: item.localizacao,
-    value: Number(item.count),
-    valor: Number(item.totalValor || 0),
-  })) || [];
+  // Limitar localizações para os top 10 por quantidade
+  const localizacaoChartData = (byLocalizacao || [])
+    .map(item => ({
+      name: item.localizacao,
+      value: Number(item.count),
+      valor: Number(item.totalValor || 0),
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
 
   const categoriaValorData = byCategoria?.map(item => ({
     name: item.categoria,
     valor: Number(item.totalValor || 0),
   })) || [];
 
-  const localizacaoValorData = byLocalizacao?.map(item => ({
-    name: item.localizacao,
-    valor: Number(item.totalValor || 0),
-  })) || [];
+  // Limitar localizações para os top 8 por valor
+  const localizacaoValorData = (byLocalizacao || [])
+    .map(item => ({
+      name: item.localizacao,
+      valor: Number(item.totalValor || 0),
+    }))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 8);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
           <p className="font-semibold text-sm">{payload[0].name}</p>
           <p className="text-sm text-gray-600">
             Quantidade: <span className="font-bold">{payload[0].value}</span>
@@ -84,7 +92,7 @@ export default function Home() {
   const CustomBarTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
           <p className="font-semibold text-sm">{payload[0].payload.name}</p>
           <p className="text-sm text-gray-600">
             Valor Total: <span className="font-bold">
@@ -98,6 +106,29 @@ export default function Home() {
       );
     }
     return null;
+  };
+
+  // Renderizar label customizado para o gráfico de pizza
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    if (percent < 0.05) return null; // Não mostrar label para fatias muito pequenas
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
   };
 
   if (loadingPatrimonios || loadingCategoria || loadingLocalizacao) {
@@ -175,100 +206,126 @@ export default function Home() {
 
         {/* Gráficos de Categoria */}
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Distribuição por Categoria</CardTitle>
               <CardDescription>Quantidade de patrimônios por tipo de equipamento</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categoriaChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {categoriaChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLOR_ARRAY[index % COLOR_ARRAY.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+            <CardContent className="p-4">
+              <div className="h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoriaChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomizedLabel}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {categoriaChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLOR_ARRAY[index % COLOR_ARRAY.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Legenda customizada abaixo do gráfico */}
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                {categoriaChartData.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center gap-1 text-xs">
+                    <div 
+                      className="w-3 h-3 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: COLOR_ARRAY[index % COLOR_ARRAY.length] }}
+                    />
+                    <span className="truncate max-w-[80px]">{entry.name}</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Valor por Categoria</CardTitle>
               <CardDescription>Valor total investido por tipo de equipamento</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={categoriaValorData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip content={<CustomBarTooltip />} />
-                  <Bar dataKey="valor" fill={COLORS.primary} />
-                </BarChart>
-              </ResponsiveContainer>
+            <CardContent className="p-4">
+              <div className="h-[320px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoriaValorData} layout="vertical" margin={{ left: 0, right: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                    <XAxis type="number" tickFormatter={(value) => `R$${(value/1000).toFixed(0)}k`} />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      width={80} 
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => value.length > 10 ? value.substring(0, 10) + '...' : value}
+                    />
+                    <Tooltip content={<CustomBarTooltip />} />
+                    <Bar dataKey="valor" fill={COLORS.primary} radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Gráficos de Localização */}
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
-              <CardTitle>Distribuição por Localização</CardTitle>
-              <CardDescription>Quantidade de patrimônios por local</CardDescription>
+              <CardTitle>Top 10 Localizações</CardTitle>
+              <CardDescription>Locais com mais patrimônios</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={localizacaoChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {localizacaoChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLOR_ARRAY[index % COLOR_ARRAY.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+            <CardContent className="p-4">
+              <div className="h-[320px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={localizacaoChartData} layout="vertical" margin={{ left: 0, right: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                    <XAxis type="number" />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      width={100} 
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(value) => value.length > 15 ? value.substring(0, 15) + '...' : value}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="value" fill={COLORS.secondary} radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Valor por Localização</CardTitle>
-              <CardDescription>Valor total investido por local</CardDescription>
+              <CardDescription>Top 8 locais por valor investido</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={localizacaoValorData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip content={<CustomBarTooltip />} />
-                  <Bar dataKey="valor" fill={COLORS.secondary} />
-                </BarChart>
-              </ResponsiveContainer>
+            <CardContent className="p-4">
+              <div className="h-[320px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={localizacaoValorData} layout="vertical" margin={{ left: 0, right: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                    <XAxis type="number" tickFormatter={(value) => `R$${(value/1000).toFixed(0)}k`} />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      width={100} 
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(value) => value.length > 15 ? value.substring(0, 15) + '...' : value}
+                    />
+                    <Tooltip content={<CustomBarTooltip />} />
+                    <Bar dataKey="valor" fill={COLORS.tertiary} radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         </div>

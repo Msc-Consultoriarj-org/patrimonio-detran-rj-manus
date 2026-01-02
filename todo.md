@@ -391,3 +391,12 @@
 - [x] Testar em ambiente de desenvolvimento
 - [ ] Validar que funciona em diferentes navegadores (mobile/desktop)
 
+
+
+## Bug - Legendas dos Gráficos Sobrepondo Conteúdo no Mobile
+
+- [x] Corrigir legendas dos gráficos de pizza que estão saindo do container
+- [x] Corrigir legendas dos gráficos de localização que sobrepõem gráficos de barras
+- [x] Ajustar layout responsivo para mobile
+- [ ] Testar em dispositivo móvel
+
