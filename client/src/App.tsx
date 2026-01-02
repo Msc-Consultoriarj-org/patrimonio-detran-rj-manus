@@ -41,9 +41,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      <Route path="/change-password">
-        <ProtectedRoute component={ChangePassword} />
-      </Route>
+
       <Route path="/profile">
         <ProtectedRoute component={Profile} />
       </Route>

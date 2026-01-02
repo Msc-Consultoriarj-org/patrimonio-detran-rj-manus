@@ -125,3 +125,14 @@
 - Validação de autenticação
 
 **Resultado dos Testes:** 21 de 22 testes passando ✅
+
+
+## Melhorias Solicitadas - Login Simplificado
+
+- [x] Simplificar login para aceitar apenas nome de usuário (sem senha)
+- [x] Remover validação de senha do backend
+- [x] Remover campo de senha do formulário de login
+- [x] Corrigir redirecionamento após login para dashboard
+- [x] Adicionar usuário Phelipe ao sistema
+- [x] Remover obrigatoriedade de troca de senha
+- [x] Testar fluxo completo de login simplificado

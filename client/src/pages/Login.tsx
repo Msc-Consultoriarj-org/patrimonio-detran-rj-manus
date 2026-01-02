@@ -1,26 +1,19 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 export default function Login() {
-  const [, setLocation] = useLocation();
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Login realizado com sucesso!");
-      if (data.mustChangePassword) {
-        setLocation("/change-password");
-      } else {
-        setLocation("/");
-      }
+      // Redireciona para a home após login bem-sucedido usando window.location para forçar reload
+      window.location.href = "/";
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao fazer login");
@@ -29,69 +22,63 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loginMutation.mutate({ username, password });
+    if (!username.trim()) {
+      toast.error("Por favor, digite seu nome de usuário");
+      return;
+    }
+    loginMutation.mutate({ username: username.trim() });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--detran-blue)] to-[var(--detran-green)] p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066CC] via-[#0088AA] to-[#00AA44] p-4">
+      <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="space-y-4 text-center">
-          <div className="flex justify-center">
-            <img
-              src="/logo-detran-rj.png"
-              alt="Detran-RJ"
-              className="h-20 w-auto"
-            />
+          <div className="flex justify-center mb-4">
+            <img src="/LogoDetran.png" alt="Detran-RJ" className="h-20 w-auto" />
           </div>
-          <CardTitle className="text-2xl">Sistema de Patrimônio DTIC</CardTitle>
-          <CardDescription>
-            Faça login para acessar o sistema de gerenciamento de patrimônio
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#0066CC] to-[#00AA44] bg-clip-text text-transparent">
+            Sistema Patrimônio DTIC
+          </CardTitle>
+          <CardDescription className="text-base">
+            Detran-RJ - Departamento de Tecnologia da Informação
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="username">Usuário</Label>
+              <Label htmlFor="username" className="text-base font-medium">
+                Nome de Usuário
+              </Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Digite seu usuário"
+                placeholder="Digite seu nome de usuário"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required
+                className="h-12 text-base"
+                autoFocus
                 disabled={loginMutation.isPending}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Digite sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loginMutation.isPending}
-              />
-            </div>
+
             <Button
               type="submit"
-              className="w-full"
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-[#0066CC] to-[#00AA44] hover:opacity-90 transition-opacity"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   Entrando...
-                </>
+                </div>
               ) : (
                 "Entrar"
               )}
             </Button>
           </form>
+
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Usuários de teste:</p>
-            <p className="mt-1">moises / pedro (senha: 123)</p>
+            <p>Usuários disponíveis: moises, pedro, phelipe</p>
           </div>
         </CardContent>
       </Card>

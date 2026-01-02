@@ -29,8 +29,7 @@ const passwordSchema = z.string()
   .regex(/[0-9]/, "A senha deve conter pelo menos um número");
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Usuário é obrigatório"),
-  password: z.string().min(1, "Senha é obrigatória"),
+  username: z.string().min(1, "Nome de usuário é obrigatório"),
 });
 
 const changePasswordSchema = z.object({
@@ -77,19 +76,10 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const user = await getUserByUsername(input.username);
 
-        if (!user || !user.passwordHash) {
+        if (!user) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
-            message: "Usuário ou senha inválidos",
-          });
-        }
-
-        const isValidPassword = await bcrypt.compare(input.password, user.passwordHash);
-
-        if (!isValidPassword) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Usuário ou senha inválidos",
+            message: "Usuário não encontrado",
           });
         }
 
@@ -104,7 +94,6 @@ export const appRouter = router({
 
         return {
           success: true,
-          mustChangePassword: user.mustChangePassword === 1,
           user: {
             id: user.id,
             username: user.username,

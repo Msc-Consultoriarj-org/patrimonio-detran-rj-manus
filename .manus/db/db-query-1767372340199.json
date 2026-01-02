@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO users (username, name, email, loginMethod, role, mustChangePassword) VALUES ('phelipe', 'Phelipe', 'phelipe@detran.rj.gov.br', 'local', 'admin', 0)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user K2MArv3yLja1b8R.0f1d20886c9a --database cWLjaUvgQmaNhKZS8jzSf7 --execute INSERT INTO users (username, name, email, loginMethod, role, mustChangePassword) VALUES ('phelipe', 'Phelipe', 'phelipe@detran.rj.gov.br', 'local', 'admin', 0)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 55
+}

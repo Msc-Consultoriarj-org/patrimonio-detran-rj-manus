@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, username, name, email, role, mustChangePassword FROM users WHERE username IN ('moises', 'pedro')",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user K2MArv3yLja1b8R.0f1d20886c9a --database cWLjaUvgQmaNhKZS8jzSf7 --execute SELECT id, username, name, email, role, mustChangePassword FROM users WHERE username IN ('moises', 'pedro')",
+  "rows": [
+    {
+      "id": "1",
+      "username": "moises",
+      "name": "Moises",
+      "email": "moises.costa12345@gmial.com",
+      "role": "admin",
+      "mustChangePassword": "1"
+    },
+    {
+      "id": "2",
+      "username": "pedro",
+      "name": "Pedro",
+      "email": "pedro@detran.rj.gov.br",
+      "role": "admin",
+      "mustChangePassword": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\tname\temail\trole\tmustChangePassword\n1\tmoises\tMoises\tmoises.costa12345@gmial.com\tadmin\t1\n2\tpedro\tPedro\tpedro@detran.rj.gov.br\tadmin\t1\n",
+  "stderr": "",
+  "execution_time_ms": 496
+}
