@@ -463,3 +463,30 @@
 - [x] Executar importação dos dados reais
 - [x] Validar integridade dos dados importados
 - [x] Verificar dashboard com dados reais
+
+
+## Melhorias de Visualização e Relatórios
+
+### Ordenação
+- [ ] Implementar ordenação por andar (ordem numérica)
+- [ ] Implementar ordenação por equipamento (alfabética)
+- [ ] Adicionar filtros de ordenação na página de patrimônios
+
+### Remover Valor
+- [ ] Remover campo valor do dashboard
+- [ ] Remover campo valor da lista de patrimônios
+- [ ] Remover gráfico "Valor por Categoria"
+- [ ] Remover gráfico "Valor por Localização"
+
+### Indicar Itens Sem Patrimônio
+- [ ] Identificar itens sem número de patrimônio no banco
+- [ ] Adicionar badge visual "SEM PATRIMÔNIO" nos cards
+- [ ] Adicionar filtro para mostrar apenas itens sem patrimônio
+- [ ] Destacar em vermelho na lista
+
+### Geração de Relatórios
+- [ ] Criar endpoint para gerar relatório PDF
+- [ ] Criar endpoint para gerar relatório Excel
+- [ ] Adicionar botão "Gerar Relatório" no dashboard
+- [ ] Relatório deve incluir: andar, equipamento, modelo, patrimônio
+- [ ] Ordenar relatório por andar e equipamento

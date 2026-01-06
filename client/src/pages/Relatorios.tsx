@@ -6,15 +6,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { FileDown, FileText, FileSpreadsheet, FileCode, Eye } from "lucide-react";
+import { FileDown, FileText, FileSpreadsheet, FileCode, Eye, Download, Loader2, MapPin } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function Relatorios() {
   const [formato, setFormato] = useState<"csv" | "pdf" | "markdown" | "visual">("visual");
   const [categoria, setCategoria] = useState<string>("todas");
   const [localizacao, setLocalizacao] = useState<string>("todas");
+  const [generatingExcel, setGeneratingExcel] = useState(false);
+  const [generatingPorLocalizacao, setGeneratingPorLocalizacao] = useState(false);
 
   const { data: patrimonios, isLoading } = trpc.patrimonio.list.useQuery();
+
+  const excelQuery = trpc.relatorios.excel.useQuery(undefined, {
+    enabled: false,
+  });
+
+  const porLocalizacaoQuery = trpc.relatorios.porLocalizacao.useQuery(undefined, {
+    enabled: false,
+  });
 
   const patrimoniosFiltrados = patrimonios?.filter((p) => {
     if (categoria !== "todas" && p.categoria !== categoria) return false;
@@ -96,6 +106,64 @@ export default function Relatorios() {
     // TODO: Implementar exportação PDF usando biblioteca como jsPDF
   };
 
+  const downloadFile = (base64Data: string, fileName: string) => {
+    try {
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Relatório baixado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao baixar arquivo:", error);
+      toast.error("Erro ao baixar relatório");
+    }
+  };
+
+  const handleGerarExcel = async () => {
+    setGeneratingExcel(true);
+    try {
+      const result = await excelQuery.refetch();
+      if (result.data) {
+        downloadFile(result.data.data, result.data.fileName);
+      }
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      toast.error("Erro ao gerar relatório Excel");
+    } finally {
+      setGeneratingExcel(false);
+    }
+  };
+
+  const handleGerarPorLocalizacao = async () => {
+    setGeneratingPorLocalizacao(true);
+    try {
+      const result = await porLocalizacaoQuery.refetch();
+      if (result.data) {
+        downloadFile(result.data.data, result.data.fileName);
+      }
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      toast.error("Erro ao gerar relatório por localização");
+    } finally {
+      setGeneratingPorLocalizacao(false);
+    }
+  };
+
   const handleExport = () => {
     switch (formato) {
       case "csv":
@@ -141,6 +209,82 @@ export default function Relatorios() {
           <p className="text-muted-foreground mt-2">
             Gere e exporte relatórios de patrimônios
           </p>
+        </div>
+
+        {/* Relatórios Excel */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileSpreadsheet className="h-5 w-5" />
+                Relatório Geral Excel
+              </CardTitle>
+              <CardDescription>
+                Relatório completo ordenado por andar e equipamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Todos os patrimônios cadastrados</p>
+                <p>• Ordenação por localização e categoria</p>
+                <p>• Indica itens sem patrimônio</p>
+              </div>
+              <Button
+                onClick={handleGerarExcel}
+                disabled={generatingExcel}
+                className="w-full"
+              >
+                {generatingExcel ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Gerar Relatório
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Relatório por Localização
+              </CardTitle>
+              <CardDescription>
+                Uma aba para cada andar/localização
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Separado por localização</p>
+                <p>• Patrimônios agrupados por local</p>
+                <p>• Fácil visualização e impressão</p>
+              </div>
+              <Button
+                onClick={handleGerarPorLocalizacao}
+                disabled={generatingPorLocalizacao}
+                className="w-full"
+                variant="outline"
+              >
+                {generatingPorLocalizacao ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Gerar Relatório
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filtros e Exportação */}

@@ -25,6 +25,7 @@ import {
   getPatrimoniosByCategoria,
   getPatrimoniosByLocalizacao,
 } from "./db";
+import { gerarRelatorioExcel, gerarRelatorioPorLocalizacao } from "./relatorios";
 
 // ============================================
 // Validation Schemas
@@ -466,6 +467,49 @@ export const appRouter = router({
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Erro ao importar dados para o banco",
+          });
+        }
+      }),
+  }),
+
+  // ============================================
+  // Relatórios Router
+  // ============================================
+  relatorios: router({
+    excel: protectedProcedure
+      .query(async () => {
+        try {
+          const buffer = await gerarRelatorioExcel();
+          const base64 = buffer.toString('base64');
+          return {
+            success: true,
+            data: base64,
+            fileName: `patrimonio-detran-${new Date().toISOString().split('T')[0]}.xlsx`,
+          };
+        } catch (error) {
+          console.error("Erro ao gerar relatório:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao gerar relatório Excel",
+          });
+        }
+      }),
+
+    porLocalizacao: protectedProcedure
+      .query(async () => {
+        try {
+          const buffer = await gerarRelatorioPorLocalizacao();
+          const base64 = buffer.toString('base64');
+          return {
+            success: true,
+            data: base64,
+            fileName: `patrimonio-por-localizacao-${new Date().toISOString().split('T')[0]}.xlsx`,
+          };
+        } catch (error) {
+          console.error("Erro ao gerar relatório:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao gerar relatório por localização",
           });
         }
       }),

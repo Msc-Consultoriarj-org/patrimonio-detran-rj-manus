@@ -215,10 +215,11 @@ export async function searchPatrimonios(searchTerm: string, categoria?: string, 
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+  // Ordenar por localização (andar) e depois por categoria (equipamento)
   const result = await db.select()
     .from(patrimonios)
     .where(whereClause)
-    .orderBy(desc(patrimonios.createdAt));
+    .orderBy(patrimonios.localizacao, patrimonios.categoria, patrimonios.descricao);
 
   return result;
 }

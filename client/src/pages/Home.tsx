@@ -30,7 +30,7 @@ export default function Home() {
   const { data: byLocalizacao, isLoading: loadingLocalizacao } = trpc.analytics.byLocalizacao.useQuery();
 
   const totalPatrimonios = patrimonios?.length || 0;
-  const valorTotal = patrimonios?.reduce((sum, p) => sum + Number(p.valor), 0) || 0;
+  // Valor removido temporariamente
   const categorias = new Set(patrimonios?.map(p => p.categoria)).size;
   const localizacoes = new Set(patrimonios?.map(p => p.localizacao)).size;
 
@@ -165,21 +165,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(valorTotal)}
-              </div>
-              <p className="text-xs text-muted-foreground">Valor total dos patrimônios</p>
-            </CardContent>
-          </Card>
+
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -204,8 +190,8 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* Gráficos de Categoria */}
-        <div className="grid gap-6 md:grid-cols-2">
+        {/* Gráfico de Categoria */}
+        <div className="grid gap-6">
           <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Distribuição por Categoria</CardTitle>
@@ -248,35 +234,11 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <CardTitle>Valor por Categoria</CardTitle>
-              <CardDescription>Valor total investido por tipo de equipamento</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="h-[320px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={categoriaValorData} layout="vertical" margin={{ left: 0, right: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                    <XAxis type="number" tickFormatter={(value) => `R$${(value/1000).toFixed(0)}k`} />
-                    <YAxis 
-                      dataKey="name" 
-                      type="category" 
-                      width={80} 
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(value) => value.length > 10 ? value.substring(0, 10) + '...' : value}
-                    />
-                    <Tooltip content={<CustomBarTooltip />} />
-                    <Bar dataKey="valor" fill={COLORS.primary} radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+
         </div>
 
-        {/* Gráficos de Localização */}
-        <div className="grid gap-6 md:grid-cols-2">
+        {/* Gráfico de Localização */}
+        <div className="grid gap-6">
           <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Top 10 Localizações</CardTitle>
@@ -303,31 +265,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <CardTitle>Valor por Localização</CardTitle>
-              <CardDescription>Top 8 locais por valor investido</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="h-[320px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={localizacaoValorData} layout="vertical" margin={{ left: 0, right: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                    <XAxis type="number" tickFormatter={(value) => `R$${(value/1000).toFixed(0)}k`} />
-                    <YAxis 
-                      dataKey="name" 
-                      type="category" 
-                      width={100} 
-                      tick={{ fontSize: 10 }}
-                      tickFormatter={(value) => value.length > 15 ? value.substring(0, 15) + '...' : value}
-                    />
-                    <Tooltip content={<CustomBarTooltip />} />
-                    <Bar dataKey="valor" fill={COLORS.tertiary} radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+
         </div>
 
         {/* Informações do Sistema */}

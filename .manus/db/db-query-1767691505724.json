@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as sem_patrimonio FROM patrimonios WHERE numeroSerie IS NULL OR numeroSerie = '' OR numeroSerie LIKE 'SN-%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user K2MArv3yLja1b8R.0f1d20886c9a --database cWLjaUvgQmaNhKZS8jzSf7 --execute SELECT COUNT(*) as sem_patrimonio FROM patrimonios WHERE numeroSerie IS NULL OR numeroSerie = '' OR numeroSerie LIKE 'SN-%'",
+  "rows": [
+    {
+      "sem_patrimonio": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "sem_patrimonio\n1\n",
+  "stderr": "",
+  "execution_time_ms": 258
+}

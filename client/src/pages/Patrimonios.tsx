@@ -66,6 +66,7 @@ export default function Patrimonios() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("");
   const [localizacaoFilter, setLocalizacaoFilter] = useState("");
+  const [semPatrimonioFilter, setSemPatrimonioFilter] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -81,11 +82,16 @@ export default function Patrimonios() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const { data: patrimonios, isLoading } = trpc.patrimonio.search.useQuery({
+  const { data: allPatrimonios, isLoading } = trpc.patrimonio.search.useQuery({
     searchTerm,
     categoria: categoriaFilter || undefined,
     localizacao: localizacaoFilter || undefined,
   });
+
+  // Filtrar itens sem patrimônio no frontend
+  const patrimonios = semPatrimonioFilter
+    ? allPatrimonios?.filter(p => !p.numeroSerie || p.numeroSerie.startsWith('SN-'))
+    : allPatrimonios;
 
   const uploadImageMutation = trpc.upload.image.useMutation();
 
@@ -285,7 +291,7 @@ export default function Patrimonios() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
               <div className="space-y-2">
                 <Label htmlFor="search">
                   <Search className="inline h-4 w-4 mr-2" />
@@ -323,6 +329,17 @@ export default function Patrimonios() {
                   onChange={(e) => setLocalizacaoFilter(e.target.value)}
                 />
               </div>
+              <div className="space-y-2 flex items-end">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={semPatrimonioFilter}
+                    onChange={(e) => setSemPatrimonioFilter(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium">Apenas sem patrimônio</span>
+                </label>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -350,9 +367,8 @@ export default function Patrimonios() {
                     <TableRow>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Categoria</TableHead>
-                      <TableHead>Valor</TableHead>
                       <TableHead>Localização</TableHead>
-                      <TableHead>Nº Série</TableHead>
+                      <TableHead>Patrimônio</TableHead>
                       <TableHead>Responsável</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -362,14 +378,16 @@ export default function Patrimonios() {
                       <TableRow key={patrimonio.id}>
                         <TableCell className="font-medium">{patrimonio.descricao}</TableCell>
                         <TableCell>{patrimonio.categoria}</TableCell>
-                        <TableCell>
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          }).format(Number(patrimonio.valor))}
-                        </TableCell>
                         <TableCell>{patrimonio.localizacao}</TableCell>
-                        <TableCell>{patrimonio.numeroSerie || "-"}</TableCell>
+                        <TableCell>
+                          {patrimonio.numeroSerie ? (
+                            <span>{patrimonio.numeroSerie}</span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-medium">
+                              SEM PATRIMÔNIO
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell>{patrimonio.responsavel}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
