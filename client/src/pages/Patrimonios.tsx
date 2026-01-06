@@ -37,8 +37,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Plus, Search, Pencil, Trash2, Package, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Search, Pencil, Trash2, Package, X, Image as ImageIcon, MapPin, Tag, Hash } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import type { Patrimonio } from "../../../drizzle/schema";
 
@@ -55,12 +56,27 @@ const categorias = [
   "Outros",
 ];
 
+// Cores por categoria
+const categoriaCores: Record<string, string> = {
+  "Rack": "bg-blue-50 border-blue-200",
+  "Switch": "bg-green-50 border-green-200",
+  "Computador": "bg-purple-50 border-purple-200",
+  "Notebook": "bg-indigo-50 border-indigo-200",
+  "Monitor": "bg-cyan-50 border-cyan-200",
+  "Impressora": "bg-amber-50 border-amber-200",
+  "Servidor": "bg-red-50 border-red-200",
+  "Roteador": "bg-teal-50 border-teal-200",
+  "No-Break": "bg-orange-50 border-orange-200",
+  "Outros": "bg-gray-50 border-gray-200",
+};
+
 export default function Patrimonios() {
   const utils = trpc.useUtils();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPatrimonio, setSelectedPatrimonio] = useState<Patrimonio | null>(null);
+  const [detailsPatrimonio, setDetailsPatrimonio] = useState<Patrimonio | null>(null);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,6 +115,7 @@ export default function Patrimonios() {
     onSuccess: () => {
       toast.success("Patrimônio cadastrado com sucesso!");
       utils.patrimonio.search.invalidate();
+      utils.patrimonio.list.invalidate();
       setIsCreateDialogOpen(false);
       resetForm();
     },
@@ -111,6 +128,7 @@ export default function Patrimonios() {
     onSuccess: () => {
       toast.success("Patrimônio atualizado com sucesso!");
       utils.patrimonio.search.invalidate();
+      utils.patrimonio.list.invalidate();
       setIsEditDialogOpen(false);
       resetForm();
     },
@@ -123,6 +141,7 @@ export default function Patrimonios() {
     onSuccess: () => {
       toast.success("Patrimônio excluído com sucesso!");
       utils.patrimonio.search.invalidate();
+      utils.patrimonio.list.invalidate();
       setIsDeleteDialogOpen(false);
       setSelectedPatrimonio(null);
     },
@@ -143,37 +162,45 @@ export default function Patrimonios() {
     });
     setImageFile(null);
     setImagePreview(null);
-    setSelectedPatrimonio(null);
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUploading(true);
+  const handleCreate = async () => {
+    if (!formData.descricao || !formData.categoria || !formData.localizacao) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
 
     try {
       let imageUrl: string | undefined;
 
-      // Upload da imagem se houver
-      if (imageFile && imagePreview) {
-        const uploadResult = await uploadImageMutation.mutateAsync({
-          base64: imagePreview,
+      if (imageFile) {
+        setUploading(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result);
+        });
+
+        const base64 = reader.result as string;
+        const result = await uploadImageMutation.mutateAsync({
+          base64: base64.split(",")[1],
           fileName: imageFile.name,
           mimeType: imageFile.type,
         });
-        imageUrl = uploadResult.url;
+
+        imageUrl = result.url;
+        setUploading(false);
       }
 
-      // Criar patrimônio
+      const { dataAquisicao, ...rest } = formData;
       createMutation.mutate({
-        ...formData,
-        dataAquisicao: new Date(formData.dataAquisicao),
+        ...rest,
+        dataAquisicao: dataAquisicao ? new Date(dataAquisicao) : new Date(),
         imageUrl,
       });
     } catch (error) {
-      console.error("Erro ao fazer upload:", error);
-      toast.error("Erro ao fazer upload da imagem");
-    } finally {
       setUploading(false);
+      toast.error("Erro ao fazer upload da imagem");
     }
   };
 
@@ -182,59 +209,66 @@ export default function Patrimonios() {
     setFormData({
       descricao: patrimonio.descricao,
       categoria: patrimonio.categoria,
-      valor: patrimonio.valor,
+      valor: patrimonio.valor?.toString() || "",
       localizacao: patrimonio.localizacao,
       numeroSerie: patrimonio.numeroSerie || "",
-      dataAquisicao: new Date(patrimonio.dataAquisicao).toISOString().split("T")[0],
-      responsavel: patrimonio.responsavel,
+      dataAquisicao: patrimonio.dataAquisicao
+        ? new Date(patrimonio.dataAquisicao).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
+      responsavel: patrimonio.responsavel || "",
     });
-    // Carregar imagem existente se houver
     if (patrimonio.imageUrl) {
       setImagePreview(patrimonio.imageUrl);
     }
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdate = async () => {
     if (!selectedPatrimonio) return;
-    setUploading(true);
+
+    if (!formData.descricao || !formData.categoria || !formData.localizacao) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
 
     try {
       let imageUrl: string | undefined = selectedPatrimonio.imageUrl || undefined;
 
-      // Upload de nova imagem se houver
-      if (imageFile && imagePreview && !imagePreview.startsWith("http")) {
-        const uploadResult = await uploadImageMutation.mutateAsync({
-          base64: imagePreview,
+      if (imageFile) {
+        setUploading(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result);
+        });
+
+        const base64 = reader.result as string;
+        const result = await uploadImageMutation.mutateAsync({
+          base64: base64.split(",")[1],
           fileName: imageFile.name,
           mimeType: imageFile.type,
         });
-        imageUrl = uploadResult.url;
+
+        imageUrl = result.url;
+        setUploading(false);
       }
 
+      const { dataAquisicao, ...rest } = formData;
       updateMutation.mutate({
         id: selectedPatrimonio.id,
         data: {
-          ...formData,
-          dataAquisicao: new Date(formData.dataAquisicao),
+          ...rest,
+          dataAquisicao: dataAquisicao ? new Date(dataAquisicao) : undefined,
           imageUrl,
         },
       });
     } catch (error) {
-      console.error("Erro ao fazer upload:", error);
-      toast.error("Erro ao fazer upload da imagem");
-    } finally {
       setUploading(false);
+      toast.error("Erro ao fazer upload da imagem");
     }
   };
 
-  const handleDelete = (patrimonio: Patrimonio) => {
-    setSelectedPatrimonio(patrimonio);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
+  const handleDelete = () => {
     if (!selectedPatrimonio) return;
     deleteMutation.mutate({ id: selectedPatrimonio.id });
   };
@@ -244,7 +278,7 @@ export default function Patrimonios() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione apenas arquivos de imagem");
+      toast.error("Por favor, selecione uma imagem válida");
       return;
     }
 
@@ -276,9 +310,12 @@ export default function Patrimonios() {
               Gerencie o patrimônio de informática do Detran-RJ
             </p>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="hidden md:flex">
             <Plus className="mr-2 h-4 w-4" />
             Novo Patrimônio
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)} size="icon" className="md:hidden">
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
 
@@ -344,7 +381,7 @@ export default function Patrimonios() {
           </CardContent>
         </Card>
 
-        {/* Tabela de Patrimônios */}
+        {/* Lista de Patrimônios */}
         <Card>
           <CardHeader>
             <CardTitle>
@@ -361,92 +398,240 @@ export default function Patrimonios() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : patrimonios && patrimonios.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Localização</TableHead>
-                      <TableHead>Patrimônio</TableHead>
-                      <TableHead>Responsável</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {patrimonios.map((patrimonio) => (
-                      <TableRow key={patrimonio.id}>
-                        <TableCell className="font-medium">{patrimonio.descricao}</TableCell>
-                        <TableCell>{patrimonio.categoria}</TableCell>
-                        <TableCell>{patrimonio.localizacao}</TableCell>
-                        <TableCell>
-                          {patrimonio.numeroSerie ? (
-                            <span>{patrimonio.numeroSerie}</span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-medium">
-                              SEM PATRIMÔNIO
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>{patrimonio.responsavel}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(patrimonio)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDelete(patrimonio)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+              <>
+                {/* Visualização Desktop - Tabela */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Localização</TableHead>
+                        <TableHead>Patrimônio</TableHead>
+                        <TableHead>Responsável</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {patrimonios.map((patrimonio) => (
+                        <TableRow key={patrimonio.id}>
+                          <TableCell className="font-medium">{patrimonio.descricao}</TableCell>
+                          <TableCell>{patrimonio.categoria}</TableCell>
+                          <TableCell>{patrimonio.localizacao}</TableCell>
+                          <TableCell>
+                            {patrimonio.numeroSerie ? (
+                              <span>{patrimonio.numeroSerie}</span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-medium">
+                                SEM PATRIMÔNIO
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>{patrimonio.responsavel}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(patrimonio)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPatrimonio(patrimonio);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Visualização Mobile - Cards */}
+                <div className="md:hidden space-y-3">
+                  {patrimonios.map((patrimonio) => {
+                    const corCard = categoriaCores[patrimonio.categoria] || categoriaCores["Outros"];
+                    return (
+                      <Card
+                        key={patrimonio.id}
+                        className={`${corCard} border-2 cursor-pointer hover:shadow-md transition-shadow`}
+                        onClick={() => setDetailsPatrimonio(patrimonio)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between">
+                              <h3 className="font-semibold text-base line-clamp-2">
+                                {patrimonio.descricao}
+                              </h3>
+                              <Badge variant="outline" className="ml-2 shrink-0">
+                                {patrimonio.categoria}
+                              </Badge>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="h-4 w-4 shrink-0" />
+                              <span className="truncate">{patrimonio.localizacao}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm">
+                              <Hash className="h-4 w-4 shrink-0" />
+                              {patrimonio.numeroSerie ? (
+                                <span className="font-mono">{patrimonio.numeroSerie}</span>
+                              ) : (
+                                <Badge variant="destructive" className="text-xs">
+                                  SEM PATRIMÔNIO
+                                </Badge>
+                              )}
+                            </div>
+
+                            {patrimonio.responsavel && (
+                              <div className="text-sm text-muted-foreground">
+                                <span className="font-medium">Resp:</span> {patrimonio.responsavel}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                Nenhum patrimônio encontrado
+                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum patrimônio encontrado</p>
               </div>
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Dialog de Criação */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Cadastrar Novo Patrimônio</DialogTitle>
-            <DialogDescription>
-              Preencha os dados do patrimônio de informática
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição *</Label>
+        {/* Modal de Detalhes (Mobile) */}
+        <Dialog open={!!detailsPatrimonio} onOpenChange={() => setDetailsPatrimonio(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Detalhes do Patrimônio</DialogTitle>
+            </DialogHeader>
+            {detailsPatrimonio && (
+              <div className="space-y-4">
+                {detailsPatrimonio.imageUrl && (
+                  <div className="rounded-lg overflow-hidden border">
+                    <img
+                      src={detailsPatrimonio.imageUrl}
+                      alt={detailsPatrimonio.descricao}
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Descrição</Label>
+                    <p className="font-medium">{detailsPatrimonio.descricao}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Categoria</Label>
+                      <p className="font-medium">{detailsPatrimonio.categoria}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Patrimônio</Label>
+                      {detailsPatrimonio.numeroSerie ? (
+                        <p className="font-mono text-sm">{detailsPatrimonio.numeroSerie}</p>
+                      ) : (
+                        <Badge variant="destructive" className="text-xs">SEM PATRIMÔNIO</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Localização</Label>
+                    <p className="font-medium">{detailsPatrimonio.localizacao}</p>
+                  </div>
+
+                  {detailsPatrimonio.responsavel && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Responsável</Label>
+                      <p className="font-medium">{detailsPatrimonio.responsavel}</p>
+                    </div>
+                  )}
+
+                  {detailsPatrimonio.dataAquisicao && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Data de Aquisição</Label>
+                      <p className="font-medium">
+                        {new Date(detailsPatrimonio.dataAquisicao).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => {
+                      handleEdit(detailsPatrimonio);
+                      setDetailsPatrimonio(null);
+                    }}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    variant="destructive"
+                    onClick={() => {
+                      setSelectedPatrimonio(detailsPatrimonio);
+                      setDetailsPatrimonio(null);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Criar Patrimônio */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Novo Patrimônio</DialogTitle>
+              <DialogDescription>
+                Cadastre um novo item no patrimônio do Detran-RJ
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="descricao">
+                  Descrição <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="descricao"
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  required
+                  placeholder="Ex: Notebook Dell Inspiron 15"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="categoria-create">Categoria *</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="categoria-create">
+                  Categoria <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formData.categoria}
                   onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-                  required
                 >
                   <SelectTrigger id="categoria-create">
                     <SelectValue placeholder="Selecione uma categoria" />
@@ -460,88 +645,78 @@ export default function Patrimonios() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="valor">Valor (R$) *</Label>
-                <Input
-                  id="valor"
-                  type="text"
-                  value={formData.valor}
-                  onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="localizacao-create">Localização *</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="localizacao-create">
+                  Localização <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="localizacao-create"
                   value={formData.localizacao}
                   onChange={(e) => setFormData({ ...formData, localizacao: e.target.value })}
-                  required
+                  placeholder="Ex: 3º Andar - Sala 305"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="numeroSerie">Número de Série</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="numeroSerie">Número de Série / Patrimônio</Label>
                 <Input
                   id="numeroSerie"
                   value={formData.numeroSerie}
                   onChange={(e) => setFormData({ ...formData, numeroSerie: e.target.value })}
+                  placeholder="Ex: 123456"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="dataAquisicao">Data de Aquisição *</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="responsavel">Responsável</Label>
+                <Input
+                  id="responsavel"
+                  value={formData.responsavel}
+                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                  placeholder="Ex: João Silva"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dataAquisicao">Data de Aquisição</Label>
                 <Input
                   id="dataAquisicao"
                   type="date"
                   value={formData.dataAquisicao}
                   onChange={(e) => setFormData({ ...formData, dataAquisicao: e.target.value })}
-                  required
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="responsavel">Responsável *</Label>
-                <Input
-                  id="responsavel"
-                  value={formData.responsavel}
-                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="image-create">Foto do Patrimônio (Opcional)</Label>
-                <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
-                  {imagePreview ? (
-                    <div className="relative inline-block">
-                      <img src={imagePreview} alt="Preview" className="max-h-32 rounded-lg" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6"
-                        onClick={handleRemoveImage}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <label htmlFor="image-create" className="cursor-pointer block">
-                      <ImageIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Clique para adicionar foto (máx. 5MB)</p>
-                      <input
-                        id="image-create"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                        disabled={uploading}
-                      />
-                    </label>
+              <div className="grid gap-2">
+                <Label htmlFor="image">Imagem</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="flex-1"
+                  />
+                  {imagePreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
+                {imagePreview && (
+                  <div className="mt-2 rounded-lg overflow-hidden border">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
               <Button
-                type="button"
                 variant="outline"
                 onClick={() => {
                   setIsCreateDialogOpen(false);
@@ -550,47 +725,47 @@ export default function Patrimonios() {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createMutation.isPending || uploading}>
-                {(createMutation.isPending || uploading) ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {uploading ? "Enviando..." : "Cadastrando..."}
-                  </>
-                ) : (
-                  "Cadastrar"
+              <Button
+                onClick={handleCreate}
+                disabled={createMutation.isPending || uploading}
+              >
+                {(createMutation.isPending || uploading) && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
+                Cadastrar
               </Button>
             </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Dialog de Edição */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Patrimônio</DialogTitle>
-            <DialogDescription>
-              Atualize os dados do patrimônio
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="descricao-edit">Descrição *</Label>
+        {/* Dialog de Editar Patrimônio */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Patrimônio</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do patrimônio
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="descricao-edit">
+                  Descrição <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="descricao-edit"
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  required
+                  placeholder="Ex: Notebook Dell Inspiron 15"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="categoria-edit">Categoria *</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="categoria-edit">
+                  Categoria <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formData.categoria}
                   onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-                  required
                 >
                   <SelectTrigger id="categoria-edit">
                     <SelectValue placeholder="Selecione uma categoria" />
@@ -604,88 +779,78 @@ export default function Patrimonios() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="valor-edit">Valor (R$) *</Label>
-                <Input
-                  id="valor-edit"
-                  type="text"
-                  value={formData.valor}
-                  onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="localizacao-edit">Localização *</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="localizacao-edit">
+                  Localização <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="localizacao-edit"
                   value={formData.localizacao}
                   onChange={(e) => setFormData({ ...formData, localizacao: e.target.value })}
-                  required
+                  placeholder="Ex: 3º Andar - Sala 305"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="numeroSerie-edit">Número de Série</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="numeroSerie-edit">Número de Série / Patrimônio</Label>
                 <Input
                   id="numeroSerie-edit"
                   value={formData.numeroSerie}
                   onChange={(e) => setFormData({ ...formData, numeroSerie: e.target.value })}
+                  placeholder="Ex: 123456"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="dataAquisicao-edit">Data de Aquisição *</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="responsavel-edit">Responsável</Label>
+                <Input
+                  id="responsavel-edit"
+                  value={formData.responsavel}
+                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                  placeholder="Ex: João Silva"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dataAquisicao-edit">Data de Aquisição</Label>
                 <Input
                   id="dataAquisicao-edit"
                   type="date"
                   value={formData.dataAquisicao}
                   onChange={(e) => setFormData({ ...formData, dataAquisicao: e.target.value })}
-                  required
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="responsavel-edit">Responsável *</Label>
-                <Input
-                  id="responsavel-edit"
-                  value={formData.responsavel}
-                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="image-edit">Foto do Patrimônio (Opcional)</Label>
-                <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
-                  {imagePreview ? (
-                    <div className="relative inline-block">
-                      <img src={imagePreview} alt="Preview" className="max-h-32 rounded-lg" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6"
-                        onClick={handleRemoveImage}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <label htmlFor="image-edit" className="cursor-pointer block">
-                      <ImageIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Clique para adicionar foto (máx. 5MB)</p>
-                      <input
-                        id="image-edit"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                        disabled={uploading}
-                      />
-                    </label>
+              <div className="grid gap-2">
+                <Label htmlFor="image-edit">Imagem</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="image-edit"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="flex-1"
+                  />
+                  {imagePreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
+                {imagePreview && (
+                  <div className="mt-2 rounded-lg overflow-hidden border">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
               <Button
-                type="button"
                 variant="outline"
                 onClick={() => {
                   setIsEditDialogOpen(false);
@@ -694,51 +859,43 @@ export default function Patrimonios() {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateMutation.isPending || uploading}>
-                {(updateMutation.isPending || uploading) ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  "Salvar Alterações"
+              <Button
+                onClick={handleUpdate}
+                disabled={updateMutation.isPending || uploading}
+              >
+                {(updateMutation.isPending || uploading) && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
+                Salvar
               </Button>
             </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o patrimônio "{selectedPatrimonio?.descricao}"?
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSelectedPatrimonio(null)}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? (
-                <>
+        {/* Dialog de Confirmar Exclusão */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este patrimônio? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                "Excluir"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                )}
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </DashboardLayout>
   );
 }

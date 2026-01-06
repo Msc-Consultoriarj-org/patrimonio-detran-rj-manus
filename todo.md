@@ -490,3 +490,27 @@
 - [ ] Adicionar botão "Gerar Relatório" no dashboard
 - [ ] Relatório deve incluir: andar, equipamento, modelo, patrimônio
 - [ ] Ordenar relatório por andar e equipamento
+
+
+## Melhoria de Visualização Mobile
+
+### Layout de Cards
+- [x] Substituir lista simples por cards com bordas e espaçamento
+- [x] Adicionar padding e margin adequados para mobile
+- [x] Garantir que cards sejam clicáveis
+
+### Diferenciação Visual
+- [x] Implementar cores alternadas (zebrado) ou cores por categoria
+- [x] Adicionar sombras sutis nos cards
+- [x] Destacar itens sem patrimônio com cor diferente
+
+### Detalhes Expansíveis
+- [x] Criar modal de detalhes ao clicar no item
+- [x] Mostrar todas as informações (descrição, categoria, localização, patrimônio, data, responsável, imagem)
+- [x] Adicionar botão de fechar modal
+- [x] Garantir responsividade do modal
+
+### Testes
+- [ ] Testar visualização no celular
+- [ ] Validar que cards são facilmente clicáveis
+- [ ] Verificar cores e contraste
