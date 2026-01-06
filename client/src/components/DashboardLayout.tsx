@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Home, LogOut, PanelLeft, Package, Lightbulb, Image, FileText, Upload, ClipboardList } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Package, FileText, ClipboardList, Play } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -30,13 +30,10 @@ import { Button } from "./ui/button";
 import Onboarding from "./Onboarding";
 
 const menuItems = [
-  { icon: Home, label: "Início", path: "/", dataTour: "dashboard" },
-  { icon: ClipboardList, label: "Levantamento", path: "/levantamento", dataTour: "levantamento" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", dataTour: "dashboard" },
   { icon: Package, label: "Patrimônios", path: "/patrimonios", dataTour: "patrimonios" },
-  { icon: Lightbulb, label: "Sugestões", path: "/sugestoes", dataTour: "sugestoes" },
-  { icon: Image, label: "Upload Imagem", path: "/upload-imagem", dataTour: "upload-imagem" },
+  { icon: ClipboardList, label: "Levantamento", path: "/levantamento", dataTour: "levantamento" },
   { icon: FileText, label: "Relatórios", path: "/relatorios", dataTour: "relatorios" },
-  { icon: Upload, label: "Upload CSV", path: "/upload-csv", dataTour: "upload-csv" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -266,7 +263,7 @@ function DashboardLayoutContent({
                   onClick={() => setRunOnboarding(true)}
                   className="cursor-pointer"
                 >
-                  <Lightbulb className="mr-2 h-4 w-4" />
+                  <Play className="mr-2 h-4 w-4" />
                   <span>Ver Tour Novamente</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem

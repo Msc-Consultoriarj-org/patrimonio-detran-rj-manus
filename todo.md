@@ -514,3 +514,12 @@
 - [ ] Testar visualização no celular
 - [ ] Validar que cards são facilmente clicáveis
 - [ ] Verificar cores e contraste
+
+
+## Simplificação do Menu Lateral
+
+- [x] Remover abas desnecessárias (Sugestões, Upload Imagem, Upload CSV, Perfil)
+- [x] Renomear "Início" para "Dashboard"
+- [x] Manter apenas 4 abas: Dashboard, Patrimônios, Levantamento, Relatórios
+- [x] Atualizar rotas no App.tsx
+- [x] Atualizar ícones e labels no DashboardLayout
