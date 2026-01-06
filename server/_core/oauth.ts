@@ -3,6 +3,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { parse as parseCookieHeader } from "cookie";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -28,8 +29,13 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // Recuperar login DETRAN do cookie (salvo antes do OAuth)
+      const cookies = parseCookieHeader(req.headers.cookie || "");
+      const detranLogin = cookies.detran_login_pending || null;
+
       await db.upsertUser({
         openId: userInfo.openId,
+        detranLogin: detranLogin || null,
         name: userInfo.name || null,
         email: userInfo.email ?? null,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
@@ -43,6 +49,9 @@ export function registerOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      
+      // Limpar cookie temporário do detranLogin
+      res.clearCookie("detran_login_pending", cookieOptions);
 
       res.redirect(302, "/");
     } catch (error) {

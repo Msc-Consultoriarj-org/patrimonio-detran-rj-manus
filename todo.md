@@ -429,3 +429,26 @@
 - [ ] Implementar confirmação antes de fazer logout
 - [ ] Testar logout em todos os navegadores
 
+
+
+## Feature - Sistema de Cadastro com Login DETRAN + OAuth Google
+
+### Backend
+- [x] Apagar todos os usuários existentes do banco de dados
+- [x] Criar endpoint de registro automático (auto-register)
+- [x] Integrar com OAuth Google do Manus
+- [x] Validar formato do login DETRAN (ex: nome.sobrenome)
+- [x] Criar usuário automaticamente após autenticação OAuth
+
+### Frontend
+- [x] Criar tela de cadastro/login unificada
+- [x] Campo para digitar login DETRAN
+- [x] Botão para autenticar com Google (OAuth Manus)
+- [x] Fluxo: Login DETRAN → OAuth Google → Criar usuário → Dashboard
+- [x] Remover sistema de login simples com nome de usuário
+
+### Validações
+- [x] Verificar se login DETRAN já existe
+- [x] Validar email do Google OAuth
+- [x] Associar login DETRAN com conta Google
+- [x] Prevenir duplicação de usuários

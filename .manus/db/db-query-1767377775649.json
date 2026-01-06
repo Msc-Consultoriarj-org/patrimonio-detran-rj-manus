@@ -1,0 +1,30 @@
+{
+  "query": "SELECT name, hasCompletedOnboarding FROM users",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user K2MArv3yLja1b8R.0f1d20886c9a --database cWLjaUvgQmaNhKZS8jzSf7 --execute SELECT name, hasCompletedOnboarding FROM users",
+  "rows": [
+    {
+      "name": "Moises",
+      "hasCompletedOnboarding": "0"
+    },
+    {
+      "name": "Pedro",
+      "hasCompletedOnboarding": "0"
+    },
+    {
+      "name": "moises",
+      "hasCompletedOnboarding": "0"
+    },
+    {
+      "name": "Phelipe",
+      "hasCompletedOnboarding": "0"
+    },
+    {
+      "name": "Moises Costa",
+      "hasCompletedOnboarding": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\thasCompletedOnboarding\nMoises\t0\nPedro\t0\nmoises\t0\nPhelipe\t0\nMoises Costa\t0\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
