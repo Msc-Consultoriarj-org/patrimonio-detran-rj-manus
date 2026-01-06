@@ -25,7 +25,7 @@ import {
   getPatrimoniosByCategoria,
   getPatrimoniosByLocalizacao,
 } from "./db";
-import { gerarRelatorioExcel, gerarRelatorioPorLocalizacao } from "./relatorios";
+import { gerarRelatorioExcel, gerarRelatorioPorLocalizacao, gerarRelatorioPDF } from "./relatorios";
 
 // ============================================
 // Validation Schemas
@@ -510,6 +510,25 @@ export const appRouter = router({
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Erro ao gerar relatório por localização",
+          });
+        }
+      }),
+
+    pdf: protectedProcedure
+      .query(async () => {
+        try {
+          const buffer = await gerarRelatorioPDF();
+          const base64 = buffer.toString('base64');
+          return {
+            success: true,
+            data: base64,
+            fileName: `patrimonio-detran-${new Date().toISOString().split('T')[0]}.pdf`,
+          };
+        } catch (error) {
+          console.error("Erro ao gerar relatório PDF:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Erro ao gerar relatório PDF",
           });
         }
       }),

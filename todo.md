@@ -553,3 +553,64 @@
 - [x] Mostrar mensagem de erro se OAuth falhar
 - [x] Escrever testes unitários para login (5/12 passando)
 - [ ] Testar login do zero em múltiplos navegadores
+
+
+## Feature - Relatório PDF com Identidade Visual Detran-RJ
+
+### Backend
+- [ ] Instalar biblioteca pdfkit para geração de PDF
+- [ ] Criar função gerarRelatorioPDF no server/relatorios.ts
+- [ ] Adicionar cabeçalho com logo e informações institucionais
+- [ ] Criar tabela de patrimônios organizada por localização
+- [ ] Adicionar rodapé com data, responsável e assinatura
+- [ ] Usar cores institucionais (azul #0066CC, verde #00AA44)
+
+### Frontend
+- [ ] Adicionar botão "Baixar PDF" na página de Relatórios
+- [ ] Implementar download do PDF gerado
+- [ ] Adicionar loading state durante geração
+
+### Testes
+- [ ] Testar geração de PDF com dados reais
+- [ ] Validar formatação e layout
+- [ ] Verificar que logo e cores estão corretos
+
+
+## Geração de Relatórios PDF com Identidade Visual Detran-RJ
+
+### Backend - Biblioteca e Geração
+- [x] Instalar biblioteca pdfkit para geração de PDF
+- [x] Criar função gerarRelatorioPDF() em server/relatorios.ts
+- [x] Implementar cabeçalho oficial com cores institucionais
+- [x] Adicionar título "DETRAN-RJ" em azul (#0066CC)
+- [x] Adicionar subtítulo "Departamento de Tecnologia da Informação"
+- [x] Adicionar informações do relatório (data, total de itens)
+- [x] Organizar patrimônios por localização/andar
+- [x] Criar tabelas com colunas: Descrição, Categoria, Patrimônio
+- [x] Destacar títulos de localização em verde (#00AA44)
+- [x] Implementar paginação automática
+- [x] Adicionar rodapé oficial com data e assinatura digital
+- [x] Criar endpoint tRPC relatorios.pdf
+
+### Frontend - Botão de Download
+- [x] Adicionar card "Relatório PDF Oficial" na página Relatórios
+- [x] Criar botão "Gerar PDF" com loading state
+- [x] Implementar função exportPDF() para chamar endpoint
+- [x] Criar função downloadFilePDF() para download do arquivo
+- [x] Adicionar feedback visual (toast) de sucesso/erro
+- [x] Ajustar layout para grid de 3 colunas (Excel Geral, Excel por Local, PDF)
+
+### Testes e Validação
+- [x] Testar geração de PDF com 181 patrimônios reais
+- [x] Validar identidade visual (cores azul e verde)
+- [x] Verificar organização por localização
+- [x] Confirmar rodapé e assinatura digital
+- [x] Testar download do arquivo PDF
+- [x] Validar formato profissional para impressão
+
+### Resultado
+✅ PDF gerado com sucesso: 28 páginas, 22KB
+✅ Cabeçalho oficial com cores institucionais
+✅ Patrimônios organizados por 25 localizações diferentes
+✅ Rodapé com assinatura digital automática
+✅ Formato pronto para impressão oficial

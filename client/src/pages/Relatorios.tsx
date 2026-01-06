@@ -15,6 +15,7 @@ export default function Relatorios() {
   const [localizacao, setLocalizacao] = useState<string>("todas");
   const [generatingExcel, setGeneratingExcel] = useState(false);
   const [generatingPorLocalizacao, setGeneratingPorLocalizacao] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
 
   const { data: patrimonios, isLoading } = trpc.patrimonio.list.useQuery();
 
@@ -23,6 +24,10 @@ export default function Relatorios() {
   });
 
   const porLocalizacaoQuery = trpc.relatorios.porLocalizacao.useQuery(undefined, {
+    enabled: false,
+  });
+
+  const pdfQuery = trpc.relatorios.pdf.useQuery(undefined, {
     enabled: false,
   });
 
@@ -101,9 +106,19 @@ export default function Relatorios() {
     toast.success("Relatório Markdown exportado com sucesso!");
   };
 
-  const exportPDF = () => {
-    toast.info("Exportação para PDF será implementada em breve");
-    // TODO: Implementar exportação PDF usando biblioteca como jsPDF
+  const exportPDF = async () => {
+    setGeneratingPDF(true);
+    try {
+      const result = await pdfQuery.refetch();
+      if (result.data) {
+        downloadFilePDF(result.data.data, result.data.fileName);
+      }
+    } catch (error) {
+      console.error("Erro ao gerar relatório PDF:", error);
+      toast.error("Erro ao gerar relatório PDF");
+    } finally {
+      setGeneratingPDF(false);
+    }
   };
 
   const downloadFile = (base64Data: string, fileName: string) => {
@@ -131,6 +146,34 @@ export default function Relatorios() {
     } catch (error) {
       console.error("Erro ao baixar arquivo:", error);
       toast.error("Erro ao baixar relatório");
+    }
+  };
+
+  const downloadFilePDF = (base64Data: string, fileName: string) => {
+    try {
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], {
+        type: "application/pdf",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Relatório PDF baixado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao baixar PDF:", error);
+      toast.error("Erro ao baixar relatório PDF");
     }
   };
 
@@ -211,8 +254,8 @@ export default function Relatorios() {
           </p>
         </div>
 
-        {/* Relatórios Excel */}
-        <div className="grid gap-6 md:grid-cols-2">
+        {/* Relatórios Excel e PDF */}
+        <div className="grid gap-6 md:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -280,6 +323,43 @@ export default function Relatorios() {
                   <>
                     <Download className="mr-2 h-4 w-4" />
                     Gerar Relatório
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Relatório PDF Oficial
+              </CardTitle>
+              <CardDescription>
+                Documento com identidade visual Detran-RJ
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Logo e cores institucionais</p>
+                <p>• Organizado por localização</p>
+                <p>• Pronto para impressão oficial</p>
+              </div>
+              <Button
+                onClick={exportPDF}
+                disabled={generatingPDF}
+                className="w-full"
+                variant="default"
+              >
+                {generatingPDF ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Gerar PDF
                   </>
                 )}
               </Button>
