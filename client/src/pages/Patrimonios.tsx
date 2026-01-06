@@ -564,14 +564,7 @@ export default function Patrimonios() {
                     </div>
                   )}
 
-                  {detailsPatrimonio.dataAquisicao && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Data de Aquisição</Label>
-                      <p className="font-medium">
-                        {new Date(detailsPatrimonio.dataAquisicao).toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
-                  )}
+
                 </div>
 
                 <div className="flex gap-2 pt-4">
@@ -674,15 +667,7 @@ export default function Patrimonios() {
                   placeholder="Ex: João Silva"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="dataAquisicao">Data de Aquisição</Label>
-                <Input
-                  id="dataAquisicao"
-                  type="date"
-                  value={formData.dataAquisicao}
-                  onChange={(e) => setFormData({ ...formData, dataAquisicao: e.target.value })}
-                />
-              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="image">Imagem</Label>
                 <div className="flex items-center gap-2">
@@ -808,15 +793,7 @@ export default function Patrimonios() {
                   placeholder="Ex: João Silva"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="dataAquisicao-edit">Data de Aquisição</Label>
-                <Input
-                  id="dataAquisicao-edit"
-                  type="date"
-                  value={formData.dataAquisicao}
-                  onChange={(e) => setFormData({ ...formData, dataAquisicao: e.target.value })}
-                />
-              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="image-edit">Imagem</Label>
                 <div className="flex items-center gap-2">

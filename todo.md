@@ -531,3 +531,25 @@
 - [x] Verificar se cookie/localStorage está sendo salvo corretamente
 - [x] Verificar se AuthContext está carregando dados do localStorage
 - [x] Testar fluxo completo de login OAuth
+
+
+## Ajustes Solicitados
+
+### Ocultar Data de Aquisição
+- [ ] Remover campo data de aquisição da tabela de patrimônios
+- [ ] Remover campo data de aquisição dos cards mobile
+- [ ] Remover campo data de aquisição do modal de detalhes
+
+### Simplificar Onboarding
+- [ ] Reduzir número de passos do tour (de 8 para 4)
+- [ ] Manter apenas passos essenciais (Dashboard, Patrimônios, Levantamento, Relatórios)
+- [ ] Traduzir botões para português
+
+### Corrigir Erro de Login
+- [x] Diagnosticar erro no sistema de login
+- [x] Limpar localStorage ao carregar página de login
+- [x] Adicionar loading state visual durante OAuth
+- [x] Adicionar timeout para OAuth (30s)
+- [x] Mostrar mensagem de erro se OAuth falhar
+- [x] Escrever testes unitários para login (5/12 passando)
+- [ ] Testar login do zero em múltiplos navegadores
