@@ -76,7 +76,7 @@ export default function Login() {
               <Input
                 id="detranLogin"
                 type="text"
-                placeholder="nome.sobrenome (ex: moises.costa)"
+                placeholder="nome.sobrenome"
                 value={detranLogin}
                 onChange={(e) => setDetranLogin(e.target.value)}
                 className="h-12 text-base"
