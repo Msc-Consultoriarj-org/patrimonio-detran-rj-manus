@@ -1,0 +1,50 @@
+{
+  "query": "SELECT localizacao, COUNT(*) as total FROM patrimonios GROUP BY localizacao ORDER BY total DESC LIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user K2MArv3yLja1b8R.0f1d20886c9a --database cWLjaUvgQmaNhKZS8jzSf7 --execute SELECT localizacao, COUNT(*) as total FROM patrimonios GROUP BY localizacao ORDER BY total DESC LIMIT 10",
+  "rows": [
+    {
+      "localizacao": "3º ANDAR (CPD)",
+      "total": "24"
+    },
+    {
+      "localizacao": "20º ANDAR",
+      "total": "18"
+    },
+    {
+      "localizacao": "12º ANDAR",
+      "total": "17"
+    },
+    {
+      "localizacao": "22º ANDAR",
+      "total": "10"
+    },
+    {
+      "localizacao": "28º ANDAR",
+      "total": "10"
+    },
+    {
+      "localizacao": "7º ANDAR",
+      "total": "9"
+    },
+    {
+      "localizacao": "6º ANDAR",
+      "total": "9"
+    },
+    {
+      "localizacao": "SOBRELOJA",
+      "total": "9"
+    },
+    {
+      "localizacao": "23º ANDAR",
+      "total": "8"
+    },
+    {
+      "localizacao": "10º ANDAR",
+      "total": "7"
+    }
+  ],
+  "messages": [],
+  "stdout": "localizacao\ttotal\n3º ANDAR (CPD)\t24\n20º ANDAR\t18\n12º ANDAR\t17\n22º ANDAR\t10\n28º ANDAR\t10\n7º ANDAR\t9\n6º ANDAR\t9\nSOBRELOJA\t9\n23º ANDAR\t8\n10º ANDAR\t7\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

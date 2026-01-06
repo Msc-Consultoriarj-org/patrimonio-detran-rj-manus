@@ -452,3 +452,14 @@
 - [x] Validar email do Google OAuth
 - [x] Associar login DETRAN com conta Google
 - [x] Prevenir duplicação de usuários
+
+
+## Importação de Dados Reais do Centro de Rede
+
+- [x] Analisar estrutura da planilha Inventário-CentrodeRede-3.xlsx
+- [x] Apagar todos os patrimônios de teste do banco
+- [x] Criar script de importação Python/Node.js
+- [x] Mapear colunas da planilha para campos do banco
+- [x] Executar importação dos dados reais
+- [x] Validar integridade dos dados importados
+- [x] Verificar dashboard com dados reais

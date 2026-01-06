@@ -1,0 +1,22 @@
+{
+  "query": "SELECT categoria, COUNT(*) as total FROM patrimonios GROUP BY categoria ORDER BY total DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user K2MArv3yLja1b8R.0f1d20886c9a --database cWLjaUvgQmaNhKZS8jzSf7 --execute SELECT categoria, COUNT(*) as total FROM patrimonios GROUP BY categoria ORDER BY total DESC",
+  "rows": [
+    {
+      "categoria": "Switch",
+      "total": "112"
+    },
+    {
+      "categoria": "Rack",
+      "total": "40"
+    },
+    {
+      "categoria": "Outros",
+      "total": "29"
+    }
+  ],
+  "messages": [],
+  "stdout": "categoria\ttotal\nSwitch\t112\nRack\t40\nOutros\t29\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}
