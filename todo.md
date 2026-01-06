@@ -523,3 +523,11 @@
 - [x] Manter apenas 4 abas: Dashboard, Patrimônios, Levantamento, Relatórios
 - [x] Atualizar rotas no App.tsx
 - [x] Atualizar ícones e labels no DashboardLayout
+
+
+## Bug - Redirecionamento para Login Após OAuth
+
+- [x] Diagnosticar por que usuário é redirecionado para tela de login após autenticação
+- [x] Verificar se cookie/localStorage está sendo salvo corretamente
+- [x] Verificar se AuthContext está carregando dados do localStorage
+- [x] Testar fluxo completo de login OAuth

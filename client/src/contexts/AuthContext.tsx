@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { trpc } from "@/lib/trpc";
 
 // Tipo do usuário
 interface User {
@@ -29,22 +30,39 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const meQuery = trpc.auth.me.useQuery();
 
-  // Carregar usuário do localStorage ao iniciar
+  // Carregar usuário do localStorage ao iniciar ou da API após OAuth
   useEffect(() => {
     try {
       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
       if (stored) {
         const parsedUser = JSON.parse(stored);
         setUser(parsedUser);
+        setLoading(false);
+        return;
       }
     } catch (error) {
       console.error("Erro ao carregar usuário do localStorage:", error);
       localStorage.removeItem(AUTH_STORAGE_KEY);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+
+    // Se não tem no localStorage, tentar carregar da API (após OAuth)
+    if (meQuery.data) {
+      const userData: User = {
+        id: meQuery.data.id,
+        username: meQuery.data.username,
+        name: meQuery.data.name,
+        email: meQuery.data.email,
+        role: meQuery.data.role,
+        hasCompletedOnboarding: !!meQuery.data.hasCompletedOnboarding,
+      };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      setUser(userData);
+    }
+
+    setLoading(false);
+  }, [meQuery.data]);
 
   // Função de login - salva no localStorage e atualiza estado
   const login = useCallback((userData: User) => {
