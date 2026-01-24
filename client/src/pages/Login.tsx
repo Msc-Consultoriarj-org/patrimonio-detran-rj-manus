@@ -17,25 +17,7 @@ export default function Login() {
     console.log("[Login] localStorage limpo");
   }, []);
 
-  // Verificar se está retornando do OAuth
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const isOAuthCallback = urlParams.has("code") || urlParams.has("state");
-    
-    if (isOAuthCallback) {
-      setIsLoading(true);
-      console.log("[Login] Detectado retorno do OAuth, aguardando autenticação...");
-      
-      // Timeout de 30 segundos
-      const timeout = setTimeout(() => {
-        setIsLoading(false);
-        toast.error("Tempo esgotado. Tente fazer login novamente.");
-        window.location.href = "/login";
-      }, 30000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, []);
+  // Não precisa mais verificar OAuth aqui - redirecionamento vai para /oauth-callback
 
   const handleLogin = () => {
     if (!detranLogin.trim()) {

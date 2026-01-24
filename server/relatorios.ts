@@ -4,6 +4,8 @@
 import * as XLSX from "xlsx";
 import PDFDocument from "pdfkit";
 import { getAllPatrimonios } from "./db";
+import path from "path";
+import fs from "fs";
 
 /**
  * Gera relatório Excel de patrimônios
@@ -134,16 +136,29 @@ export async function gerarRelatorioPDF(): Promise<Buffer> {
     const azulDetran = "#0066CC";
     const verdeDetran = "#00AA44";
 
-    // Cabeçalho
+    // Cabeçalho com logo
+    const logoPath = path.join(process.cwd(), "client", "public", "LogoDetran.png");
+    
+    // Verificar se logo existe e adicionar
+    if (fs.existsSync(logoPath)) {
+      try {
+        doc.image(logoPath, 50, 40, { width: 80, height: 80 });
+      } catch (error) {
+        console.error("Erro ao adicionar logo:", error);
+      }
+    }
+
+    // Textos do cabeçalho (ajustados para dar espaço à logo)
     doc.fillColor(azulDetran)
       .fontSize(20)
-      .text("DETRAN-RJ", { align: "center" })
+      .text("DETRAN-RJ", 140, 50, { align: "left" })
       .fontSize(16)
-      .text("Departamento de Tecnologia da Informação", { align: "center" })
-      .fontSize(14)
       .fillColor("#333333")
-      .text("Relatório de Patrimônios", { align: "center" })
-      .moveDown(2);
+      .text("Departamento de Tecnologia da Informação", 140, 75, { align: "left" })
+      .fontSize(14)
+      .text("Relatório de Patrimônios", 140, 100, { align: "left" });
+    
+    doc.moveDown(3);
 
     // Informações do relatório
     const dataGeracao = new Date().toLocaleDateString("pt-BR", {

@@ -14,6 +14,7 @@ import UploadImagem from "./pages/UploadImagem";
 import Relatorios from "./pages/Relatorios";
 import UploadCSV from "./pages/UploadCSV";
 import Levantamento from "./pages/Levantamento";
+import OAuthCallback from "./pages/OAuthCallback";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -42,6 +43,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/oauth-callback" component={OAuthCallback} />
 
       <Route path="/profile">
         <ProtectedRoute component={Profile} />

@@ -614,3 +614,21 @@
 ✅ Patrimônios organizados por 25 localizações diferentes
 ✅ Rodapé com assinatura digital automática
 ✅ Formato pronto para impressão oficial
+
+
+## Problemas Reportados - Correções Urgentes
+
+### Logo e Identidade Visual no PDF
+- [x] Adicionar logo do Detran-RJ no cabeçalho do PDF
+- [x] Verificar caminho correto do arquivo LogoDetran.png
+- [x] Implementar inserção de imagem no PDF usando pdfkit
+- [x] Ajustar layout do cabeçalho para incluir logo
+- [x] Testar geração de PDF com logo
+
+### Problemas no Login
+- [x] Investigar problema atual no fluxo de login
+- [x] Criar página intermediária /oauth-callback
+- [x] Implementar carregamento de dados do usuário via tRPC
+- [x] Corrigir salvamento no localStorage via AuthContext
+- [x] Ajustar redirecionamento do backend para /oauth-callback
+- [x] Testar login completo end-to-end

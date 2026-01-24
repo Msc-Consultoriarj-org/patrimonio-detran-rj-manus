@@ -53,7 +53,7 @@ export function registerOAuthRoutes(app: Express) {
       // Limpar cookie temporário do detranLogin
       res.clearCookie("detran_login_pending", cookieOptions);
 
-      res.redirect(302, "/");
+      res.redirect(302, "/oauth-callback");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
