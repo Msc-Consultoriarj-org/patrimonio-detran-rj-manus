@@ -24,6 +24,13 @@ import {
   updateSugestaoStatus,
   getPatrimoniosByCategoria,
   getPatrimoniosByLocalizacao,
+  createHistorico,
+  getHistoricoByPatrimonio,
+  getAllHistorico,
+  getPatrimoniosSemNumeroSerie,
+  getPatrimoniosSemResponsavel,
+  getPatrimoniosSemLocalizacao,
+  getAlertasSummary,
 } from "./db";
 import { gerarRelatorioExcel, gerarRelatorioPorLocalizacao, gerarRelatorioPDF } from "./relatorios";
 
@@ -187,14 +194,34 @@ export const appRouter = router({
         return patrimonio;
       }),
 
+    searchByNumeroSerie: protectedProcedure
+      .input(z.object({ numeroSerie: z.string() }))
+      .mutation(async ({ input }) => {
+        const patrimonios = await searchPatrimonios(input.numeroSerie, undefined, undefined);
+        // Buscar patrimônio que tenha exatamente o número de série informado
+        const found = patrimonios.find(
+          (p) => p.numeroSerie?.toLowerCase() === input.numeroSerie.toLowerCase()
+        );
+        return found || null;
+      }),
+
     create: protectedProcedure
       .input(patrimonioSchema)
       .mutation(async ({ input, ctx }) => {
-        await createPatrimonio({
+        const patrimonioId = await createPatrimonio({
           ...input,
           userId: ctx.user.id,
         });
-        return { success: true };
+        
+        // Registrar no histórico
+        await createHistorico({
+          patrimonioId,
+          userId: ctx.user.id,
+          tipoAcao: "criacao",
+          descricaoAcao: `Patrimônio "${input.descricao}" cadastrado`,
+        });
+        
+        return { success: true, id: patrimonioId };
       }),
 
     update: protectedProcedure
@@ -202,13 +229,31 @@ export const appRouter = router({
         id: z.number(),
         data: patrimonioSchema.partial(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const patrimonio = await getPatrimonioById(input.id);
         if (!patrimonio) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Patrimônio não encontrado",
           });
+        }
+
+        // Registrar alterações no histórico
+        const camposAlterados: string[] = [];
+        for (const [campo, valorNovo] of Object.entries(input.data)) {
+          const valorAnterior = (patrimonio as any)[campo];
+          if (valorAnterior !== valorNovo && valorNovo !== undefined) {
+            camposAlterados.push(campo);
+            await createHistorico({
+              patrimonioId: input.id,
+              userId: ctx.user.id,
+              tipoAcao: "edicao",
+              campoAlterado: campo,
+              valorAnterior: String(valorAnterior || ''),
+              valorNovo: String(valorNovo || ''),
+              descricaoAcao: `Campo "${campo}" alterado`,
+            });
+          }
         }
 
         await updatePatrimonio(input.id, input.data);
@@ -217,7 +262,7 @@ export const appRouter = router({
 
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const patrimonio = await getPatrimonioById(input.id);
         if (!patrimonio) {
           throw new TRPCError({
@@ -225,6 +270,15 @@ export const appRouter = router({
             message: "Patrimônio não encontrado",
           });
         }
+
+        // Registrar exclusão no histórico
+        await createHistorico({
+          patrimonioId: input.id,
+          userId: ctx.user.id,
+          tipoAcao: "exclusao",
+          descricaoAcao: `Patrimônio "${patrimonio.descricao}" excluído`,
+          valorAnterior: JSON.stringify(patrimonio),
+        });
 
         await deletePatrimonio(input.id);
         return { success: true };
@@ -569,6 +623,48 @@ export const appRouter = router({
             message: "Erro ao fazer upload da imagem",
           });
         }
+      }),
+  }),
+
+  // ============================================
+  // Histórico Router (Auditoria)
+  // ============================================
+  historico: router({
+    byPatrimonio: protectedProcedure
+      .input(z.object({ patrimonioId: z.number() }))
+      .query(async ({ input }) => {
+        return await getHistoricoByPatrimonio(input.patrimonioId);
+      }),
+
+    recent: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await getAllHistorico(input?.limit || 50);
+      }),
+  }),
+
+  // ============================================
+  // Alertas Router
+  // ============================================
+  alertas: router({
+    summary: protectedProcedure
+      .query(async () => {
+        return await getAlertasSummary();
+      }),
+
+    semNumeroSerie: protectedProcedure
+      .query(async () => {
+        return await getPatrimoniosSemNumeroSerie();
+      }),
+
+    semResponsavel: protectedProcedure
+      .query(async () => {
+        return await getPatrimoniosSemResponsavel();
+      }),
+
+    semLocalizacao: protectedProcedure
+      .query(async () => {
+        return await getPatrimoniosSemLocalizacao();
       }),
   }),
 });

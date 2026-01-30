@@ -1,6 +1,6 @@
 import { eq, like, sql, and, desc, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, patrimonios, InsertPatrimonio, sugestoes, InsertSugestao } from "../drizzle/schema";
+import { InsertUser, users, patrimonios, InsertPatrimonio, sugestoes, InsertSugestao, patrimonioHistorico, InsertPatrimonioHistorico } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -130,12 +130,13 @@ export async function updateUserProfile(userId: number, data: { name?: string; e
 // Patrimonio Helpers
 // ============================================
 
-export async function createPatrimonio(data: InsertPatrimonio) {
+export async function createPatrimonio(data: InsertPatrimonio): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const result = await db.insert(patrimonios).values(data);
-  return result;
+  // Retorna o ID do patrimônio inserido
+  return Number(result[0].insertId);
 }
 
 export async function getPatrimoniosByUserId(userId: number) {
@@ -299,4 +300,131 @@ export async function getPatrimoniosByLocalizacao() {
     .groupBy(patrimonios.localizacao);
 
   return result;
+}
+
+// ============================================
+// Histórico de Patrimônios (Auditoria)
+// ============================================
+
+export async function createHistorico(historico: InsertPatrimonioHistorico) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(patrimonioHistorico).values(historico);
+}
+
+export async function getHistoricoByPatrimonio(patrimonioId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(patrimonioHistorico)
+    .where(eq(patrimonioHistorico.patrimonioId, patrimonioId))
+    .orderBy(desc(patrimonioHistorico.createdAt));
+
+  return result;
+}
+
+export async function getAllHistorico(limit: number = 50) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(patrimonioHistorico)
+    .orderBy(desc(patrimonioHistorico.createdAt))
+    .limit(limit);
+
+  return result;
+}
+
+// ============================================
+// Alertas e Pendências
+// ============================================
+
+export async function getPatrimoniosSemNumeroSerie() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(patrimonios)
+    .where(
+      or(
+        eq(patrimonios.numeroSerie, ''),
+        sql`${patrimonios.numeroSerie} IS NULL`
+      )
+    )
+    .orderBy(patrimonios.localizacao);
+
+  return result;
+}
+
+export async function getPatrimoniosSemResponsavel() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(patrimonios)
+    .where(
+      or(
+        eq(patrimonios.responsavel, ''),
+        sql`${patrimonios.responsavel} IS NULL`
+      )
+    )
+    .orderBy(patrimonios.localizacao);
+
+  return result;
+}
+
+export async function getPatrimoniosSemLocalizacao() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(patrimonios)
+    .where(
+      or(
+        eq(patrimonios.localizacao, ''),
+        sql`${patrimonios.localizacao} IS NULL`
+      )
+    );
+
+  return result;
+}
+
+export async function getAlertasSummary() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const semNumeroSerie = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(patrimonios)
+    .where(
+      or(
+        eq(patrimonios.numeroSerie, ''),
+        sql`${patrimonios.numeroSerie} IS NULL`
+      )
+    );
+
+  const semResponsavel = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(patrimonios)
+    .where(
+      or(
+        eq(patrimonios.responsavel, ''),
+        sql`${patrimonios.responsavel} IS NULL`
+      )
+    );
+
+  const semLocalizacao = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(patrimonios)
+    .where(
+      or(
+        eq(patrimonios.localizacao, ''),
+        sql`${patrimonios.localizacao} IS NULL`
+      )
+    );
+
+  return {
+    semNumeroSerie: Number(semNumeroSerie[0]?.count || 0),
+    semResponsavel: Number(semResponsavel[0]?.count || 0),
+    semLocalizacao: Number(semLocalizacao[0]?.count || 0),
+  };
 }

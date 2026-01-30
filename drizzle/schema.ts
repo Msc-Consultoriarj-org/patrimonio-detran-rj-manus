@@ -58,3 +58,21 @@ export const sugestoes = mysqlTable("sugestoes", {
 
 export type Sugestao = typeof sugestoes.$inferSelect;
 export type InsertSugestao = typeof sugestoes.$inferInsert;
+
+/**
+ * Tabela de histórico de movimentações/alterações de patrimônios (Auditoria)
+ */
+export const patrimonioHistorico = mysqlTable("patrimonio_historico", {
+  id: int("id").autoincrement().primaryKey(),
+  patrimonioId: int("patrimonioId").notNull(),
+  userId: int("userId").notNull(),
+  tipoAcao: mysqlEnum("tipoAcao", ["criacao", "edicao", "exclusao", "movimentacao"]).notNull(),
+  campoAlterado: varchar("campoAlterado", { length: 100 }),
+  valorAnterior: text("valorAnterior"),
+  valorNovo: text("valorNovo"),
+  descricaoAcao: text("descricaoAcao"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PatrimonioHistorico = typeof patrimonioHistorico.$inferSelect;
+export type InsertPatrimonioHistorico = typeof patrimonioHistorico.$inferInsert;

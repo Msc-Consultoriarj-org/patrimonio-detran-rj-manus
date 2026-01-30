@@ -706,3 +706,39 @@
 - [ ] Atualizar cabeçalho do dashboard
 - [ ] Atualizar PDF com identidade visual correta
 - [ ] Adicionar brasão/logo em todas as páginas
+
+
+## Novas Funcionalidades - Scanner QR Code, Histórico e Alertas (30/01/2026) ✅ CONCLUÍDO
+
+### Scanner de QR Code / Código de Barras no Levantamento
+- [x] Instalar biblioteca de leitura de QR Code/código de barras (html5-qrcode)
+- [x] Criar componente QRCodeScanner.tsx reutilizável
+- [x] Integrar scanner na página de Levantamento com abas (Scanner/Cadastro Manual)
+- [x] Implementar busca automática de patrimônio após leitura do código (searchByNumeroSerie)
+- [x] Exibir dados do patrimônio encontrado ou opção de cadastrar novo
+- [x] Adicionar feedback visual e sonoro na leitura (beep)
+- [x] Suportar leitura de códigos de barras tradicionais (EAN-13, EAN-8, Code128, Code39, UPC-A, UPC-E)
+- [x] Interface pronta para dispositivos móveis
+
+### Sistema de Histórico de Movimentações (Auditoria)
+- [x] Criar tabela patrimonio_historico no banco de dados
+- [x] Campos: id, patrimonioId, userId, tipoAcao, campoAlterado, valorAnterior, valorNovo, descricaoAcao, createdAt
+- [x] Implementar registro automático de alterações nas operações create/update/delete
+- [x] Criar endpoint tRPC historico.byPatrimonio para listar histórico de um patrimônio
+- [x] Criar endpoint tRPC historico.recent para listar histórico recente
+- [x] Criar visualização de timeline na página de Alertas
+- [x] Exibir quem alterou, quando e o que mudou
+- [x] Badges coloridos por tipo de ação (criação, edição, exclusão)
+
+### Dashboard de Alertas Automáticos
+- [x] Criar endpoint tRPC alertas.summary para obter resumo de pendências
+- [x] Criar endpoint alertas.semNumeroSerie para listar patrimônios sem número
+- [x] Criar endpoint alertas.semResponsavel para listar patrimônios sem responsável
+- [x] Criar endpoint alertas.semLocalizacao para listar patrimônios sem local
+- [x] Criar página Alertas.tsx com dashboard completo
+- [x] Exibir cards com contadores de cada tipo de alerta
+- [x] Listar itens problemáticos com botão de edição
+- [x] Adicionar menu "Alertas" no sidebar com ícone de triângulo
+- [x] Abas para navegação: Resumo, Sem Nº Série, Sem Responsável, Sem Local, Histórico
+- [x] Testes unitários criados e passando (alertas.test.ts)
+- [ ] Implementar filtros por tipo de alerta

@@ -14,6 +14,7 @@ import UploadImagem from "./pages/UploadImagem";
 import Relatorios from "./pages/Relatorios";
 import UploadCSV from "./pages/UploadCSV";
 import Levantamento from "./pages/Levantamento";
+import Alertas from "./pages/Alertas";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -66,6 +67,9 @@ function Router() {
       </Route>
       <Route path="/upload-csv">
         <ProtectedRoute component={UploadCSV} />
+      </Route>
+      <Route path="/alertas">
+        <ProtectedRoute component={Alertas} />
       </Route>
       <Route path="/">
         <ProtectedRoute component={Home} />
