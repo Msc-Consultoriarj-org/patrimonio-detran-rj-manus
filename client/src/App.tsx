@@ -14,7 +14,6 @@ import UploadImagem from "./pages/UploadImagem";
 import Relatorios from "./pages/Relatorios";
 import UploadCSV from "./pages/UploadCSV";
 import Levantamento from "./pages/Levantamento";
-import OAuthCallback from "./pages/OAuthCallback";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -23,8 +22,11 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   // Mostrar loading enquanto verifica autenticação
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0066CC] to-[#00AA44]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#005A92] to-[#00A651]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+          <p className="text-white mt-4 font-medium">Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -43,7 +45,6 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      <Route path="/oauth-callback" component={OAuthCallback} />
 
       <Route path="/profile">
         <ProtectedRoute component={Profile} />

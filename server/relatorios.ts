@@ -132,12 +132,13 @@ export async function gerarRelatorioPDF(): Promise<Buffer> {
     doc.on("end", () => resolve(Buffer.concat(buffers)));
     doc.on("error", reject);
 
-    // Cores institucionais Detran-RJ
-    const azulDetran = "#0066CC";
-    const verdeDetran = "#00AA44";
+    // Cores Oficiais do Detran-RJ / Governo do Estado do RJ
+    const azulDetran = "#005A92";  // Pantone 3015 C
+    const verdeDetran = "#00A651"; // Verde Detran
+    const cinzaDetran = "#A0A0A0"; // Pantone Cool Gray 7 C
 
     // Cabeçalho com logo
-    const logoPath = path.join(process.cwd(), "client", "public", "LogoDetran.png");
+    const logoPath = path.join(process.cwd(), "client", "public", "assets", "detran-rj-logo.png");
     
     // Verificar se logo existe e adicionar
     if (fs.existsSync(logoPath)) {

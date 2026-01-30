@@ -632,3 +632,77 @@
 - [x] Corrigir salvamento no localStorage via AuthContext
 - [x] Ajustar redirecionamento do backend para /oauth-callback
 - [x] Testar login completo end-to-end
+
+
+## Reformulação Completa - Sistema de Login e Identidade Visual (CONCLUÍDO)
+
+### Pesquisa de Identidade Visual
+- [x] Pesquisar manual de identidade visual do Governo do Estado do RJ
+- [x] Pesquisar manual de identidade visual do Detran-RJ
+- [x] Identificar cores oficiais (Azul #005A92, Verde #00A651, Cinza #A0A0A0)
+- [x] Identificar tipografia oficial (Antenna, Roboto)
+- [x] Baixar logos oficiais do Detran-RJ
+- [x] Pesquisar melhores práticas para sistemas de patrimônio
+
+### Remoção do Sistema de Login Antigo
+- [x] Remover página OAuthCallback.tsx
+- [x] Remover fluxo de login DETRAN com cookie
+- [x] Simplificar AuthContext
+- [x] Remover função login() do contexto
+
+### Novo Sistema de Login Simplificado
+- [x] Criar nova página de Login com botão direto para OAuth
+- [x] Aplicar identidade visual oficial do Detran-RJ
+- [x] Adicionar logo oficial no topo
+- [x] Adicionar rodapé institucional
+- [x] Configurar redirecionamento para / após OAuth
+
+### Aplicação da Identidade Visual
+- [x] Atualizar cores no index.css com valores oficiais
+- [x] Atualizar cores no Home.tsx
+- [x] Atualizar caminho da logo no DashboardLayout
+- [x] Atualizar cores e logo no PDF de relatórios
+- [x] Copiar logos para pasta /assets
+
+### Testes
+- [x] Testar login via OAuth
+- [x] Verificar exibição da logo no sidebar
+- [x] Verificar cores no dashboard
+- [x] Verificar página de login
+
+## Reformulação Completa - Sistema de Login e Identidade Visual (30/01/2026)
+
+### Pesquisa de Identidade Visual
+- [ ] Pesquisar manual de identidade visual do Detran-RJ
+- [ ] Pesquisar manual de identidade visual do Governo do Estado do RJ
+- [ ] Identificar logos oficiais, cores institucionais, tipografia
+- [ ] Identificar frases e slogans institucionais
+- [ ] Baixar assets visuais oficiais (logos, brasões)
+
+### Pesquisa de Melhores Práticas - Sistemas de Patrimônio
+- [ ] Pesquisar funcionalidades essenciais de sistemas de patrimônio
+- [ ] Identificar fluxos de trabalho recomendados
+- [ ] Pesquisar UX/UI para sistemas de gestão de ativos
+- [ ] Documentar requisitos funcionais complementares
+
+### Remoção do Sistema de Login Atual
+- [ ] Remover página de Login atual
+- [ ] Remover página OAuthCallback
+- [ ] Remover AuthContext complexo
+- [ ] Limpar rotas de autenticação do App.tsx
+- [ ] Remover dependências de OAuth não utilizadas
+
+### Novo Sistema de Login Simplificado
+- [ ] Definir abordagem simplificada de autenticação
+- [ ] Implementar nova página de login
+- [ ] Implementar novo contexto de autenticação
+- [ ] Testar fluxo completo de login
+- [ ] Garantir persistência de sessão
+
+### Aplicação da Identidade Visual Oficial
+- [ ] Atualizar logo na página de login
+- [ ] Atualizar cores do tema para padrão institucional
+- [ ] Atualizar tipografia conforme manual
+- [ ] Atualizar cabeçalho do dashboard
+- [ ] Atualizar PDF com identidade visual correta
+- [ ] Adicionar brasão/logo em todas as páginas

@@ -204,13 +204,13 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  <img src="/LogoDetran.png" alt="Detran-RJ" className="h-8 w-auto" />
+                  <img src="/assets/detran-rj-logo.png" alt="Detran-RJ" className="h-8 w-auto" />
                   <span className="font-semibold tracking-tight truncate text-white text-sm">
                     Sistema Patrimônio DTIC
                   </span>
                 </div>
               ) : (
-                <img src="/LogoDetran.png" alt="Detran-RJ" className="h-8 w-auto" />
+                <img src="/assets/detran-rj-logo.png" alt="Detran-RJ" className="h-8 w-auto" />
               )}
             </div>
           </SidebarHeader>

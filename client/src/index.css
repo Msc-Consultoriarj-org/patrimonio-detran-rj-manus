@@ -44,11 +44,15 @@
 }
 
 :root {
-  /* Cores do Detran-RJ */
-  --detran-blue: oklch(0.55 0.18 240);
-  --detran-green: oklch(0.65 0.20 145);
-  --detran-blue-dark: oklch(0.45 0.18 240);
-  --detran-green-dark: oklch(0.55 0.20 145);
+  /* Cores Oficiais do Detran-RJ / Governo do Estado do RJ */
+  /* Azul Institucional: #005A92 (Pantone 3015 C) */
+  /* Verde Detran: #00A651 */
+  /* Cinza: #A0A0A0 (Pantone Cool Gray 7 C) */
+  --detran-blue: oklch(0.45 0.12 240);  /* #005A92 */
+  --detran-green: oklch(0.60 0.18 145); /* #00A651 */
+  --detran-gray: oklch(0.70 0.00 0);    /* #A0A0A0 */
+  --detran-blue-dark: oklch(0.35 0.12 240);
+  --detran-green-dark: oklch(0.50 0.18 145);
 
   --primary: var(--detran-blue);
   --primary-foreground: oklch(1 0 0);

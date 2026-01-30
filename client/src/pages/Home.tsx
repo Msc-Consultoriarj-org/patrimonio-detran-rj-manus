@@ -5,13 +5,14 @@ import { trpc } from "@/lib/trpc";
 import { Package, TrendingUp, MapPin, Layers, Loader2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
+// Cores Oficiais do Detran-RJ / Governo do Estado do RJ
 const COLORS = {
-  primary: "#0066CC",
-  secondary: "#00AA44",
-  tertiary: "#0088AA",
-  quaternary: "#00CC88",
-  quinary: "#0044AA",
-  senary: "#00DD66",
+  primary: "#005A92",    // Azul Institucional (Pantone 3015 C)
+  secondary: "#00A651",  // Verde Detran
+  tertiary: "#007AAA",   // Azul intermediário
+  quaternary: "#00CC88", // Verde claro
+  quinary: "#003D66",    // Azul escuro
+  senary: "#A0A0A0",     // Cinza (Pantone Cool Gray 7 C)
 };
 
 const COLOR_ARRAY = [
@@ -145,7 +146,7 @@ export default function Home() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#0066CC] via-[#0088AA] to-[#00AA44] rounded-lg p-8 text-white">
+        <div className="bg-gradient-to-r from-[#005A92] via-[#007AAA] to-[#00A651] rounded-lg p-8 text-white">
           <h1 className="text-3xl font-bold mb-2">Bem-vindo, {user?.name || user?.username}!</h1>
           <p className="text-white/90 text-lg">
             Sistema de Gerenciamento de Patrimônio de Informática - Detran-RJ
@@ -278,7 +279,7 @@ export default function Home() {
             <CardContent>
               <a
                 href="/patrimonios"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-r from-[#0066CC] to-[#00AA44] text-white hover:opacity-90 h-10 px-4 py-2 w-full"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-r from-[#005A92] to-[#00A651] text-white hover:opacity-90 h-10 px-4 py-2 w-full"
               >
                 <Package className="mr-2 h-4 w-4" />
                 Acessar Patrimônios

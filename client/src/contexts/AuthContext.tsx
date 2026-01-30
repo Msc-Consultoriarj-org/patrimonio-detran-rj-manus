@@ -16,8 +16,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (user: User) => void;
   logout: () => void;
+  refetch: () => void;
 }
 
 // Chave do localStorage
@@ -30,25 +30,22 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const meQuery = trpc.auth.me.useQuery();
+  
+  // Query para buscar usuário autenticado via cookie de sessão
+  const meQuery = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
-  // Carregar usuário do localStorage ao iniciar ou da API após OAuth
+  // Efeito para sincronizar estado com a query
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsedUser = JSON.parse(stored);
-        setUser(parsedUser);
-        setLoading(false);
-        return;
-      }
-    } catch (error) {
-      console.error("Erro ao carregar usuário do localStorage:", error);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+    if (meQuery.isLoading) {
+      setLoading(true);
+      return;
     }
 
-    // Se não tem no localStorage, tentar carregar da API (após OAuth)
     if (meQuery.data) {
+      // Usuário autenticado via sessão
       const userData: User = {
         id: meQuery.data.id,
         username: meQuery.data.username,
@@ -57,39 +54,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: meQuery.data.role,
         hasCompletedOnboarding: !!meQuery.data.hasCompletedOnboarding,
       };
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
+      // Salvar no localStorage como cache
+      try {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      } catch (e) {
+        console.error("Erro ao salvar no localStorage:", e);
+      }
+    } else if (meQuery.isError || !meQuery.data) {
+      // Não autenticado - limpar estado
+      setUser(null);
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch (e) {
+        console.error("Erro ao limpar localStorage:", e);
+      }
     }
 
     setLoading(false);
-  }, [meQuery.data]);
+  }, [meQuery.data, meQuery.isLoading, meQuery.isError]);
 
-  // Função de login - salva no localStorage e atualiza estado
-  const login = useCallback((userData: User) => {
+  // Função de logout
+  const logoutMutation = trpc.auth.logout.useMutation();
+  
+  const logout = useCallback(async () => {
     try {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
-      setUser(userData);
-    } catch (error) {
-      console.error("Erro ao salvar usuário no localStorage:", error);
+      await logoutMutation.mutateAsync();
+    } catch (e) {
+      console.error("Erro no logout:", e);
     }
-  }, []);
+    setUser(null);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.location.href = "/login";
+  }, [logoutMutation]);
 
-  // Função de logout - limpa localStorage e estado
-  const logout = useCallback(() => {
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      setUser(null);
-    } catch (error) {
-      console.error("Erro ao limpar localStorage:", error);
-    }
-  }, []);
+  // Função para refetch manual
+  const refetch = useCallback(() => {
+    meQuery.refetch();
+  }, [meQuery]);
 
   const value: AuthContextType = {
     user,
     loading,
     isAuthenticated: !!user,
-    login,
     logout,
+    refetch,
   };
 
   return (
