@@ -742,3 +742,40 @@
 - [x] Abas para navegação: Resumo, Sem Nº Série, Sem Responsável, Sem Local, Histórico
 - [x] Testes unitários criados e passando (alertas.test.ts)
 - [ ] Implementar filtros por tipo de alerta
+
+
+## Novas Funcionalidades - Etiquetas, Notificações e Métricas (30/01/2026) ✅ CONCLUÍDO
+
+### Geração de Etiquetas com QR Code
+- [x] Instalar biblioteca de geração de QR Code (qrcode)
+- [x] Criar página Etiquetas.tsx com seleção de patrimônios
+- [x] Implementar layout de etiqueta com logo Detran, QR Code e informações
+- [x] Gerar QR Code no cliente usando biblioteca qrcode
+- [x] Implementar área de impressão com CSS @media print
+- [x] Adicionar botão "Imprimir" com contagem de selecionados
+- [x] Permitir seleção de múltiplos patrimônios para impressão em lote
+- [x] Configurar tamanhos de etiqueta (pequena 50x25mm, média 70x35mm, grande 100x50mm)
+- [x] Adicionar menu "Etiquetas" no sidebar
+
+### Sistema de Notificações por Email
+- [x] Configurar integração com Manus Notification API (notifyOwner)
+- [x] Criar template de email para relatório de pendências
+- [x] Implementar botão "Enviar Agora" para notificação imediata
+- [x] Criar página Notificacoes.tsx com configurações
+- [x] Permitir configurar frequência (diária, semanal, mensal)
+- [x] Adicionar preview do relatório
+- [x] Adicionar histórico de notificações enviadas
+- [x] Adicionar menu "Notificações" no sidebar
+
+### Dashboard de Métricas por Responsável
+- [x] Criar endpoints tRPC (porResponsavel, porCategoria, porLocalizacao)
+- [x] Instalar chart.js e react-chartjs-2
+- [x] Implementar gráfico de barras com distribuição por responsável (top 10)
+- [x] Implementar gráfico de pizza com categorias
+- [x] Implementar gráfico de pizza com localizações (top 8)
+- [x] Criar tabela detalhada com totais por responsável
+- [x] Adicionar cards de resumo (total responsáveis, patrimônios, média)
+- [x] Criar página MetricasResponsavel.tsx com abas
+- [x] Adicionar menu "Métricas" no sidebar
+- [x] Implementar exportação para CSV
+- [x] Testes unitários criados e passando (metricas.test.ts)

@@ -31,6 +31,9 @@ import {
   getPatrimoniosSemResponsavel,
   getPatrimoniosSemLocalizacao,
   getAlertasSummary,
+  getMetricasPorResponsavel,
+  getMetricasPorCategoria,
+  getMetricasPorLocalizacao,
 } from "./db";
 import { gerarRelatorioExcel, gerarRelatorioPorLocalizacao, gerarRelatorioPDF } from "./relatorios";
 
@@ -665,6 +668,26 @@ export const appRouter = router({
     semLocalizacao: protectedProcedure
       .query(async () => {
         return await getPatrimoniosSemLocalizacao();
+      }),
+  }),
+
+  // ============================================
+  // Métricas Router
+  // ============================================
+  metricas: router({
+    porResponsavel: protectedProcedure
+      .query(async () => {
+        return await getMetricasPorResponsavel();
+      }),
+
+    porCategoria: protectedProcedure
+      .query(async () => {
+        return await getMetricasPorCategoria();
+      }),
+
+    porLocalizacao: protectedProcedure
+      .query(async () => {
+        return await getMetricasPorLocalizacao();
       }),
   }),
 });

@@ -15,6 +15,9 @@ import Relatorios from "./pages/Relatorios";
 import UploadCSV from "./pages/UploadCSV";
 import Levantamento from "./pages/Levantamento";
 import Alertas from "./pages/Alertas";
+import Etiquetas from "./pages/Etiquetas";
+import Notificacoes from "./pages/Notificacoes";
+import MetricasResponsavel from "./pages/MetricasResponsavel";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -70,6 +73,15 @@ function Router() {
       </Route>
       <Route path="/alertas">
         <ProtectedRoute component={Alertas} />
+      </Route>
+      <Route path="/etiquetas">
+        <ProtectedRoute component={Etiquetas} />
+      </Route>
+      <Route path="/notificacoes">
+        <ProtectedRoute component={Notificacoes} />
+      </Route>
+      <Route path="/metricas">
+        <ProtectedRoute component={MetricasResponsavel} />
       </Route>
       <Route path="/">
         <ProtectedRoute component={Home} />

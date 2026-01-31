@@ -428,3 +428,93 @@ export async function getAlertasSummary() {
     semLocalizacao: Number(semLocalizacao[0]?.count || 0),
   };
 }
+
+
+// ============================================
+// Métricas por Responsável
+// ============================================
+
+export async function getMetricasPorResponsavel() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Contagem de patrimônios por responsável
+  const porResponsavel = await db.select({
+    responsavel: patrimonios.responsavel,
+    total: sql<number>`COUNT(*)`,
+  })
+    .from(patrimonios)
+    .groupBy(patrimonios.responsavel)
+    .orderBy(sql`COUNT(*) DESC`);
+
+  // Contagem de patrimônios por responsável e categoria
+  const porResponsavelCategoria = await db.select({
+    responsavel: patrimonios.responsavel,
+    categoria: patrimonios.categoria,
+    total: sql<number>`COUNT(*)`,
+  })
+    .from(patrimonios)
+    .groupBy(patrimonios.responsavel, patrimonios.categoria)
+    .orderBy(patrimonios.responsavel, patrimonios.categoria);
+
+  // Valor total por responsável
+  const valorPorResponsavel = await db.select({
+    responsavel: patrimonios.responsavel,
+    valorTotal: sql<string>`SUM(CAST(REPLACE(REPLACE(valor, 'R$', ''), ',', '.') AS DECIMAL(10,2)))`,
+  })
+    .from(patrimonios)
+    .groupBy(patrimonios.responsavel)
+    .orderBy(sql`SUM(CAST(REPLACE(REPLACE(valor, 'R$', ''), ',', '.') AS DECIMAL(10,2))) DESC`);
+
+  return {
+    porResponsavel: porResponsavel.map(r => ({
+      responsavel: r.responsavel || "Não definido",
+      total: Number(r.total),
+    })),
+    porResponsavelCategoria: porResponsavelCategoria.map(r => ({
+      responsavel: r.responsavel || "Não definido",
+      categoria: r.categoria,
+      total: Number(r.total),
+    })),
+    valorPorResponsavel: valorPorResponsavel.map(r => ({
+      responsavel: r.responsavel || "Não definido",
+      valorTotal: parseFloat(r.valorTotal || "0"),
+    })),
+  };
+}
+
+export async function getMetricasPorCategoria() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const porCategoria = await db.select({
+    categoria: patrimonios.categoria,
+    total: sql<number>`COUNT(*)`,
+  })
+    .from(patrimonios)
+    .groupBy(patrimonios.categoria)
+    .orderBy(sql`COUNT(*) DESC`);
+
+  return porCategoria.map(c => ({
+    categoria: c.categoria,
+    total: Number(c.total),
+  }));
+}
+
+export async function getMetricasPorLocalizacao() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const porLocalizacao = await db.select({
+    localizacao: patrimonios.localizacao,
+    total: sql<number>`COUNT(*)`,
+  })
+    .from(patrimonios)
+    .groupBy(patrimonios.localizacao)
+    .orderBy(sql`COUNT(*) DESC`);
+
+  return porLocalizacao.map(l => ({
+    localizacao: l.localizacao,
+    total: Number(l.total),
+  }));
+}

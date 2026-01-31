@@ -22,7 +22,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Package, FileText, ClipboardList, Play, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Package, FileText, ClipboardList, Play, AlertTriangle, QrCode, Bell, BarChart3 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -33,7 +33,10 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", dataTour: "dashboard" },
   { icon: Package, label: "Patrimônios", path: "/patrimonios", dataTour: "patrimonios" },
   { icon: ClipboardList, label: "Levantamento", path: "/levantamento", dataTour: "levantamento" },
+  { icon: QrCode, label: "Etiquetas", path: "/etiquetas", dataTour: "etiquetas" },
   { icon: AlertTriangle, label: "Alertas", path: "/alertas", dataTour: "alertas" },
+  { icon: Bell, label: "Notificações", path: "/notificacoes", dataTour: "notificacoes" },
+  { icon: BarChart3, label: "Métricas", path: "/metricas", dataTour: "metricas" },
   { icon: FileText, label: "Relatórios", path: "/relatorios", dataTour: "relatorios" },
 ];
 
